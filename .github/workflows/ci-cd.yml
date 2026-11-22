@@ -111,12 +111,14 @@ jobs:
             fi
             sleep 2
           done
-          curl -fsS http://localhost:8080/ | grep -i "LinguaType"
+          curl -fsS http://localhost:8080/ | grep -q 'id="root"'
           TOPICS_COUNT=$(curl -fsS http://localhost:8080/api/topics | grep -o '"id"' | wc -l)
           echo "✅ Verified $TOPICS_COUNT grammar topics from /api/topics"
           test "$TOPICS_COUNT" -ge 16
           curl -fsS http://localhost:8080/api/stats >/dev/null
-          curl -fsS http://localhost:8080/api/music >/dev/null
+          curl -fsS http://localhost:8080/api/music-lessons >/dev/null
+          curl -fsS http://localhost:8080/api/vocabulary >/dev/null
+          curl -fsS http://localhost:8080/api/leaderboard >/dev/null
           echo "✅ All E2E API smoke checks passed!"
 
       - name: Log in to GitHub Container Registry (GHCR)
