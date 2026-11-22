@@ -4,7 +4,6 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: linguatype-backend
     restart: unless-stopped
     ports:
       - "5000:5000"
@@ -19,7 +18,6 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    container_name: linguatype-frontend
     restart: unless-stopped
     ports:
       - "8080:80"
@@ -33,7 +31,6 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile.test
-    container_name: linguatype-tests
     profiles:
       - test
     networks:
