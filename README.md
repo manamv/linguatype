@@ -1,6 +1,6 @@
 ﻿# LinguaType — AI Touch-Typing & English Grammar Trainer
 
-[![LinguaType CI/CD Pipeline](https://github.com/manamv/linguatype/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/manamv/linguatype/actions/workflows/ci-cd.yml)
+[![LinguaType CI/CD Pipeline](https://github.com/manamv/linguatype/actions/workflows/ci-cd.yml/badge.svg?branch=main)](https://github.com/manamv/linguatype/actions/workflows/ci-cd.yml)
 
 > Интеллектуальный веб-тренажёр для одновременного освоения **слепой десятипальцевой печати** и **английской грамматики (A1–C1)** с cyber-glass визуализацией рук, AI-разбором опечаток, интерактивными квизами и синхронизированным караоке.
 
