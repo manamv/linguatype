@@ -7,11 +7,12 @@ if (process.platform === 'win32' && process.cwd()[1] === ':') {
   process.chdir(upperDrive)
 }
 
-const npxCmd = process.platform === 'win32' ? 'npx.cmd' : 'npx'
+const isWin = process.platform === 'win32'
+const npxCmd = isWin ? 'npx.cmd' : 'npx'
 const res = spawnSync(npxCmd, ['vitest', 'run', ...process.argv.slice(2)], {
   stdio: 'inherit',
-  shell: true,
+  shell: isWin,
   cwd: process.cwd()
 })
 
-process.exit(res.status ?? 0)
+process.exit(res.status ?? 1)
