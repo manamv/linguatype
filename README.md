@@ -1,7 +1,6 @@
-# LinguaType — AI Touch-Typing & English Grammar Trainer
+﻿# LinguaType — AI Touch-Typing & English Grammar Trainer
 
-> **Практика 8:** «Добавляем фронтенд к своему проекту с помощью AI» (12 из 12 баллов)  
-> **Курс:** «AI-инструменты в жизни инженера: от идеи до продакшена», ИТМО 2026.
+> Интеллектуальный веб-тренажёр для одновременного освоения **слепой десятипальцевой печати** и **английской грамматики (A1–C1)** с cyber-glass визуализацией рук, AI-разбором опечаток, интерактивными квизами и синхронизированным караоке.
 
 ---
 
@@ -16,11 +15,11 @@
 
 ## 📐 Spec-Driven Development (SDD / Spec-Kit)
 
-Разработка велась строго по методологии **Spec-Driven Development** (преемственность с Практикой 5):
-* 📋 **[spec-kit.config.yaml](file:///d:/3sem/vibecoding/ITMOv2/practices/practice_08/specs/spec-kit.config.yaml)** — конфигурация SDD и команд (UI & Logic).
-* 🤝 **[contract.md](file:///d:/3sem/vibecoding/ITMOv2/practices/practice_08/specs/contract.md)** — согласованный контракт взаимодействия, Negotiation Log, OpenAPI 3.1 спецификация.
-* 🖥️ **[ui-spec.md](file:///d:/3sem/vibecoding/ITMOv2/practices/practice_08/specs/ui-spec.md)** — спецификация компонентов, состояний интерфейса, доступности a11y и 8 зон пальцев.
-* ⚙️ **[logic-spec.md](file:///d:/3sem/vibecoding/ITMOv2/practices/practice_08/specs/logic-spec.md)** — формулы WPM и точности, алгоритм трекинга слабых букв, Web Speech TTS пайплайн.
+Разработка ведётся по методологии **Spec-Driven Development**:
+* 📋 **[spec-kit.config.yaml](specs/spec-kit.config.yaml)** — конфигурация SDD и команд (UI & Logic).
+* 🤝 **[contract.md](specs/contract.md)** — согласованный контракт взаимодействия, Negotiation Log, OpenAPI 3.1 спецификация.
+* 🖥️ **[ui-spec.md](specs/ui-spec.md)** — спецификация компонентов, состояний интерфейса, доступности a11y и 8 зон пальцев.
+* ⚙️ **[logic-spec.md](specs/logic-spec.md)** — формулы WPM и точности, алгоритм трекинга слабых букв, Web Speech TTS пайплайн.
 
 ---
 
@@ -60,7 +59,7 @@
 > Для сборки и запуска приложения и бэкенда в изолированных контейнерах без установки SDK:
 
 ```bash
-cd practices/practice_08
+cd D:\linguatype
 
 # Запуск бэкенда (C#) и фронтенда (Nginx + React)
 docker compose up --build
