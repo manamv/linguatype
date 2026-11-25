@@ -654,5 +654,21 @@ describe('Criterion 8: Component Rendering and User Interactions', () => {
     expect(xmasTab).toHaveTextContent(/Last Christmas/i)
     fireEvent.click(xmasTab)
     expect(await screen.findByTestId('christmas-snowfall')).toBeInTheDocument()
+
+    // Verify scalable CEFR music catalog filtering and search
+    expect(screen.getByTestId('music-level-group-A2')).toBeInTheDocument()
+    expect(screen.getByTestId('music-level-group-B1')).toBeInTheDocument()
+    expect(screen.getByTestId('music-level-group-B2')).toBeInTheDocument()
+
+    // Filter to B2 only
+    fireEvent.click(screen.getByTestId('music-level-filter-B2'))
+    expect(screen.getByTestId('song-tab-steve-lacy-the-feeling')).toBeInTheDocument()
+    expect(screen.queryByTestId('song-tab-wham-last-christmas')).not.toBeInTheDocument()
+
+    // Reset to ALL and search for "Christmas"
+    fireEvent.click(screen.getByTestId('music-level-filter-ALL'))
+    fireEvent.change(screen.getByTestId('music-search-input'), { target: { value: 'christmas' } })
+    expect(screen.getByTestId('song-tab-wham-last-christmas')).toBeInTheDocument()
+    expect(screen.queryByTestId('song-tab-queen-champions')).not.toBeInTheDocument()
   })
 })

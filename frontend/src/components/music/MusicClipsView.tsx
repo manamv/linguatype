@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react'
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import {
   Music,
   Play,
@@ -7,6 +7,8 @@ import {
   BookOpen,
   Sparkles,
   ChevronRight,
+  ChevronDown,
+  ChevronUp,
   Headphones,
   Bot,
   Flame,
@@ -19,7 +21,12 @@ import {
   Eye,
   EyeOff,
   SkipForward,
-  CheckCircle2
+  CheckCircle2,
+  Search,
+  X,
+  Shuffle,
+  Snowflake,
+  Library
 } from 'lucide-react'
 import type { MusicLesson, LessonData } from '../../types'
 import { api } from '../../services/api'
@@ -193,6 +200,49 @@ const SNOWFLAKES = Array.from({ length: 22 }, (_, i) => ({
   delay: `-${(i * 1.3) % 14}s`
 }))
 
+const MUSIC_LEVEL_ORDER = ['A1', 'A2', 'B1', 'B2', 'C1'] as const
+
+const MUSIC_LEVEL_META: Record<
+  string,
+  {
+    label: string
+    subtitle: string
+    dotClass: string
+    badgeClass: string
+  }
+> = {
+  A1: {
+    label: 'A1 • Foundation',
+    subtitle: 'Медленный темп и базовые фразы',
+    dotClass: 'bg-sky-400 shadow-[0_0_8px_#38bdf8]',
+    badgeClass: 'bg-sky-500/15 text-sky-300 border-sky-400/30'
+  },
+  A2: {
+    label: 'A2 • Elementary',
+    subtitle: 'Понятный вокал, Past Simple и повседневная лексика',
+    dotClass: 'bg-cyan-400 shadow-[0_0_8px_#22d3ee]',
+    badgeClass: 'bg-cyan-500/15 text-cyan-300 border-cyan-400/30'
+  },
+  B1: {
+    label: 'B1 • Intermediate',
+    subtitle: 'Present Perfect, идиомы и выразительные метафоры',
+    dotClass: 'bg-blue-400 shadow-[0_0_8px_#60a5fa]',
+    badgeClass: 'bg-blue-500/15 text-blue-300 border-blue-400/30'
+  },
+  B2: {
+    label: 'B2 • Upper-Intermediate',
+    subtitle: 'Живой разговорный темп, сленг и сложные обороты',
+    dotClass: 'bg-indigo-400 shadow-[0_0_8px_#818cf8]',
+    badgeClass: 'bg-indigo-500/15 text-indigo-300 border-indigo-400/30'
+  },
+  C1: {
+    label: 'C1 • Advanced',
+    subtitle: 'Быстрый флоу, редкие идиомы и культурные отсылки',
+    dotClass: 'bg-violet-400 shadow-[0_0_8px_#a78bfa]',
+    badgeClass: 'bg-violet-500/15 text-violet-300 border-violet-400/30'
+  }
+}
+
 export const MusicClipsView: React.FC<MusicClipsViewProps> = ({ onStartTyping, onBack }) => {
   const [songsList, setSongsList] = useState<
     Array<{
@@ -209,6 +259,11 @@ export const MusicClipsView: React.FC<MusicClipsViewProps> = ({ onStartTyping, o
   const [currentSong, setCurrentSong] = useState<MusicLesson | null>(null)
   const [isLoading, setIsLoading] = useState<boolean>(true)
   const [activeTab, setActiveTab] = useState<'grammar' | 'ai-meaning'>('grammar')
+
+  // Scalable Music Catalog state (CEFR level filter, search, collapsible drawer)
+  const [selectedLevelFilter, setSelectedLevelFilter] = useState<string>('ALL')
+  const [songSearchQuery, setSongSearchQuery] = useState<string>('')
+  const [isCatalogOpen, setIsCatalogOpen] = useState<boolean>(true)
 
   // Real-time YouTube Clip Karaoke State (only updates on line/word changes -> 0 lag!)
   const [isKaraokePlaying, setIsKaraokePlaying] = useState<boolean>(false)
@@ -875,6 +930,61 @@ export const MusicClipsView: React.FC<MusicClipsViewProps> = ({ onStartTyping, o
 
   const aiAnalysis = AI_SONG_ANALYSES[selectedSongId] || AI_SONG_ANALYSES['queen-champions']
 
+  // Count tracks per CEFR level for scalable filter pills
+  const levelCounts = useMemo(() => {
+    const counts: Record<string, number> = {}
+    for (const s of songsList) {
+      const lvl = s.level.toUpperCase()
+      counts[lvl] = (counts[lvl] || 0) + 1
+    }
+    return counts
+  }, [songsList])
+
+  const availableLevels = useMemo(() => {
+    const ordered = MUSIC_LEVEL_ORDER.filter(lvl => (levelCounts[lvl] || 0) > 0)
+    return ['ALL', ...ordered]
+  }, [levelCounts])
+
+  const filteredSongs = useMemo(() => {
+    const q = songSearchQuery.trim().toLowerCase()
+    return songsList.filter(song => {
+      const matchesLevel = selectedLevelFilter === 'ALL' || song.level.toUpperCase() === selectedLevelFilter
+      const matchesQuery =
+        !q ||
+        song.title.toLowerCase().includes(q) ||
+        song.artist.toLowerCase().includes(q) ||
+        song.grammarFocus.toLowerCase().includes(q) ||
+        song.level.toLowerCase().includes(q)
+      return matchesLevel && matchesQuery
+    })
+  }, [songsList, selectedLevelFilter, songSearchQuery])
+
+  const groupedSongsByLevel = useMemo(() => {
+    const groups: Array<{ level: string; items: typeof songsList }> = []
+    for (const lvl of MUSIC_LEVEL_ORDER) {
+      const items = filteredSongs.filter(s => s.level.toUpperCase() === lvl)
+      if (items.length > 0) {
+        groups.push({ level: lvl, items })
+      }
+    }
+    const other = filteredSongs.filter(
+      s => !MUSIC_LEVEL_ORDER.includes(s.level.toUpperCase() as (typeof MUSIC_LEVEL_ORDER)[number])
+    )
+    if (other.length > 0) {
+      groups.push({ level: 'OTHER', items: other })
+    }
+    return groups
+  }, [filteredSongs])
+
+  const handleRandomSong = () => {
+    const pool = filteredSongs.length > 0 ? filteredSongs : songsList
+    if (pool.length === 0) return
+    const alternatives = pool.filter(s => s.id !== selectedSongId)
+    const pickPool = alternatives.length > 0 ? alternatives : pool
+    const pick = pickPool[Math.floor(Math.random() * pickPool.length)]
+    setSelectedSongId(pick.id)
+  }
+
   return (
     <div
       className="relative space-y-6 max-w-5xl mx-auto w-full animate-fade-in"
@@ -947,31 +1057,211 @@ export const MusicClipsView: React.FC<MusicClipsViewProps> = ({ onStartTyping, o
         )}
       </div>
 
-      {/* Song Selector Carousel / Tabs */}
-      <div className="flex items-center gap-3 overflow-x-auto pb-1 scrollbar-none">
-        {songsList.map(song => {
-          const isSelected = song.id === selectedSongId
-          return (
+      {/* Scalable Music Library Catalog: Level Filter + Search + Grouped CEFR Tracks */}
+      <div
+        className="rounded-3xl bg-[#090d16]/95 border border-white/[0.08] p-4 sm:p-5 space-y-4 shadow-2xl shadow-black/70"
+        data-testid="music-catalog"
+      >
+        {/* Top Toolbar: Catalog Title, Active Track Pill, Random, Collapse */}
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-sky-500/10 border border-sky-400/25 flex items-center justify-center text-sky-400">
+              <Library className="w-4 h-4" />
+            </div>
+            <div>
+              <div className="text-xs font-bold text-white flex items-center gap-2">
+                <span>Каталог клипов и песен</span>
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-white/[0.05] border border-white/[0.08] text-slate-300">
+                  {filteredSongs.length} / {songsList.length}
+                </span>
+              </div>
+              {currentSong && (
+                <div className="text-[11px] text-slate-400 mt-0.5">
+                  Выбран:{' '}
+                  <span className="text-sky-300 font-semibold">
+                    {currentSong.artist} — {currentSong.title}
+                  </span>{' '}
+                  <span className="font-mono text-[10px] text-slate-500">({currentSong.level})</span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
             <button
-              key={song.id}
-              onClick={() => setSelectedSongId(song.id)}
-              className={`flex items-center space-x-3 px-3.5 py-2.5 rounded-2xl border transition-all cursor-pointer shrink-0 text-left ${
-                isSelected
-                  ? 'bg-white/[0.08] border-sky-400/60 shadow-lg shadow-sky-500/10 text-white font-semibold ring-1 ring-sky-400/30'
-                  : 'bg-[#090d16]/80 border-white/[0.06] text-slate-400 hover:text-slate-200 hover:bg-white/[0.03]'
-              }`}
-              data-testid={`song-tab-${song.id}`}
+              onClick={handleRandomSong}
+              className="px-3 py-1.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.09] text-slate-300 hover:text-white border border-white/[0.08] text-[11px] font-mono transition flex items-center gap-1.5 cursor-pointer"
+              title="Выбрать случайный трек из каталога"
+              data-testid="music-random-btn"
             >
-              <div className="w-7 h-7 rounded-lg bg-sky-500/10 flex items-center justify-center font-bold text-xs text-sky-400 border border-sky-500/25 font-mono">
-                {song.level}
-              </div>
-              <div>
-                <div className="text-xs font-bold text-slate-200">{song.title}</div>
-                <div className="text-[11px] text-slate-400">{song.artist}</div>
-              </div>
+              <Shuffle className="w-3.5 h-3.5 text-sky-400" />
+              <span className="hidden sm:inline">Случайный трек</span>
             </button>
-          )
-        })}
+
+            <button
+              onClick={() => setIsCatalogOpen(o => !o)}
+              className="px-3 py-1.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.09] text-slate-300 hover:text-white border border-white/[0.08] text-[11px] font-mono transition flex items-center gap-1.5 cursor-pointer"
+              aria-expanded={isCatalogOpen}
+              data-testid="music-catalog-toggle"
+            >
+              <span>{isCatalogOpen ? 'Свернуть каталог' : 'Выбрать песню'}</span>
+              {isCatalogOpen ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+            </button>
+          </div>
+        </div>
+
+        {isCatalogOpen && (
+          <div className="space-y-4 pt-1 border-t border-white/[0.06]">
+            {/* Filter Controls: CEFR Level Pills + Instant Search */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2">
+              <div className="flex flex-wrap items-center gap-1.5" role="tablist" aria-label="Фильтр клипов по уровню английского">
+                {availableLevels.map(lvl => {
+                  const isActive = selectedLevelFilter === lvl
+                  const count = lvl === 'ALL' ? songsList.length : levelCounts[lvl] || 0
+                  return (
+                    <button
+                      key={lvl}
+                      onClick={() => setSelectedLevelFilter(lvl)}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-mono transition-all cursor-pointer flex items-center gap-1.5 ${
+                        isActive
+                          ? 'bg-sky-400 text-slate-950 font-bold shadow-lg shadow-sky-500/25'
+                          : 'bg-white/[0.03] text-slate-400 hover:text-white hover:bg-white/[0.07] border border-white/[0.07]'
+                      }`}
+                      data-testid={`music-level-filter-${lvl}`}
+                    >
+                      <span>{lvl === 'ALL' ? 'Все уровни' : lvl}</span>
+                      <span
+                        className={`text-[10px] px-1.5 py-0.2 rounded-md ${
+                          isActive ? 'bg-slate-950/20 text-slate-950' : 'bg-white/[0.06] text-slate-400'
+                        }`}
+                      >
+                        {count}
+                      </span>
+                    </button>
+                  )
+                })}
+              </div>
+
+              <div className="relative w-full sm:w-64">
+                <Search className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <input
+                  type="text"
+                  value={songSearchQuery}
+                  onChange={e => setSongSearchQuery(e.target.value)}
+                  placeholder="Поиск песни, артиста, темы..."
+                  aria-label="Поиск клипа или песни"
+                  data-testid="music-search-input"
+                  className="w-full pl-8 pr-8 py-1.5 rounded-xl bg-[#050810] border border-white/[0.09] text-xs text-white placeholder-slate-500 focus:outline-none focus:border-sky-400/60 focus:ring-1 focus:ring-sky-400/30 transition"
+                />
+                {songSearchQuery && (
+                  <button
+                    onClick={() => setSongSearchQuery('')}
+                    aria-label="Очистить поиск песен"
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white cursor-pointer"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Grouped Songs by CEFR Level (scales cleanly to dozens of tracks) */}
+            {groupedSongsByLevel.length === 0 ? (
+              <div className="p-6 rounded-2xl bg-[#050810]/80 border border-white/[0.06] text-center space-y-2">
+                <p className="text-xs text-slate-400">По вашему запросу треков не найдено.</p>
+                <button
+                  onClick={() => {
+                    setSelectedLevelFilter('ALL')
+                    setSongSearchQuery('')
+                  }}
+                  className="px-3 py-1.5 rounded-xl bg-sky-500/15 hover:bg-sky-500/25 text-sky-300 border border-sky-400/30 text-xs font-mono cursor-pointer transition"
+                >
+                  Сбросить фильтры
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-4 max-h-[300px] overflow-y-auto pr-1">
+                {groupedSongsByLevel.map(group => {
+                  const meta = MUSIC_LEVEL_META[group.level] ?? {
+                    label: group.level,
+                    subtitle: 'Музыкальная подборка',
+                    dotClass: 'bg-sky-400',
+                    badgeClass: 'bg-sky-500/15 text-sky-300 border-sky-400/30'
+                  }
+                  return (
+                    <div
+                      key={group.level}
+                      className="space-y-2"
+                      data-testid={`music-level-group-${group.level}`}
+                    >
+                      <div className="flex items-center justify-between gap-2 px-1">
+                        <div className="flex items-center gap-2">
+                          <span className={`w-2 h-2 rounded-full ${meta.dotClass}`} />
+                          <span className="text-xs font-bold text-slate-200 tracking-wide">{meta.label}</span>
+                          <span className="text-[11px] text-slate-500 hidden md:inline">— {meta.subtitle}</span>
+                        </div>
+                        <span className="text-[10px] font-mono text-slate-500">
+                          {group.items.length} {group.items.length === 1 ? 'трек' : group.items.length < 5 ? 'трека' : 'треков'}
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
+                        {group.items.map(song => {
+                          const isSelected = song.id === selectedSongId
+                          const isChristmas = song.id === 'wham-last-christmas'
+                          return (
+                            <button
+                              key={song.id}
+                              onClick={() => setSelectedSongId(song.id)}
+                              className={`group flex flex-col justify-between gap-2 p-3 rounded-2xl border transition-all cursor-pointer text-left ${
+                                isSelected
+                                  ? 'bg-sky-500/[0.11] border-sky-400/60 shadow-lg shadow-sky-500/10 ring-1 ring-sky-400/30'
+                                  : 'bg-[#050810]/85 border-white/[0.06] hover:border-white/[0.16] hover:bg-white/[0.04]'
+                              }`}
+                              data-testid={`song-tab-${song.id}`}
+                            >
+                              <div className="flex items-start justify-between gap-2 w-full">
+                                <div className="min-w-0">
+                                  <div className="text-xs font-bold text-white truncate flex items-center gap-1.5">
+                                    <span className="truncate">{song.title}</span>
+                                    {isChristmas && (
+                                      <Snowflake className="w-3 h-3 text-sky-300 shrink-0" aria-hidden="true" />
+                                    )}
+                                  </div>
+                                  <div className="text-[11px] text-slate-400 truncate">{song.artist}</div>
+                                </div>
+                                <span
+                                  className={`px-2 py-0.5 rounded-lg text-[10px] font-mono font-bold border shrink-0 ${meta.badgeClass}`}
+                                >
+                                  {song.level}
+                                </span>
+                              </div>
+
+                              <div className="flex items-center justify-between gap-2 w-full pt-1 border-t border-white/[0.05]">
+                                <span className="text-[10px] font-mono text-sky-300/80 truncate">
+                                  {song.grammarFocus}
+                                </span>
+                                {isSelected ? (
+                                  <span className="text-[10px] font-mono text-emerald-300 font-bold shrink-0">
+                                    ● Активен
+                                  </span>
+                                ) : (
+                                  <span className="text-[10px] font-mono text-slate-500 group-hover:text-slate-300 shrink-0">
+                                    {song.sentenceCount} фраз
+                                  </span>
+                                )}
+                              </div>
+                            </button>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Song Detail Body: 2 Columns */}
