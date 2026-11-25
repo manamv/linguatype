@@ -292,7 +292,7 @@ export function App() {
               data-testid="achievements-btn"
             >
               <Trophy className="w-3.5 h-3.5 text-amber-400" />
-              <span>Награды ({achievementsService.getUnlockedCount()}/10)</span>
+              <span>Награды ({achievementsService.getUnlockedCount()}/{achievementsService.getAchievements().length})</span>
             </button>
 
             <div className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-white/[0.03] border border-white/[0.08] text-sky-400 shadow-sm">
