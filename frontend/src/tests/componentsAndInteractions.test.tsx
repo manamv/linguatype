@@ -655,10 +655,14 @@ describe('Criterion 8: Component Rendering and User Interactions', () => {
     fireEvent.click(xmasTab)
     expect(await screen.findByTestId('christmas-snowfall')).toBeInTheDocument()
 
-    // Verify scalable CEFR music catalog filtering and search
+    // Verify scalable CEFR music catalog filtering and search (A2, B1, B2, C1)
     expect(screen.getByTestId('music-level-group-A2')).toBeInTheDocument()
     expect(screen.getByTestId('music-level-group-B1')).toBeInTheDocument()
     expect(screen.getByTestId('music-level-group-B2')).toBeInTheDocument()
+    expect(screen.getByTestId('music-level-group-C1')).toBeInTheDocument()
+    expect(screen.getByTestId('song-tab-eagles-hotel-california')).toBeInTheDocument()
+    expect(screen.getByTestId('song-tab-kendrick-samidot')).toBeInTheDocument()
+    expect(screen.getByTestId('song-tab-j-cole-4-your-eyez-only')).toBeInTheDocument()
 
     // Filter to B2 only
     fireEvent.click(screen.getByTestId('music-level-filter-B2'))
