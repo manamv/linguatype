@@ -181,7 +181,6 @@ export const MusicClipsView: React.FC<MusicClipsViewProps> = ({ onStartTyping, o
 
   // Real-time YouTube Clip Karaoke State (only updates on line/word changes -> 0 lag!)
   const [isKaraokePlaying, setIsKaraokePlaying] = useState<boolean>(false)
-  const [isYtConnected, setIsYtConnected] = useState<boolean>(false)
   const [activeSubtitleId, setActiveSubtitleId] = useState<number>(1)
   const [activeWordIdx, setActiveWordIdx] = useState<number>(-1)
   const [isInIntro, setIsInIntro] = useState<boolean>(false)
@@ -247,9 +246,6 @@ export const MusicClipsView: React.FC<MusicClipsViewProps> = ({ onStartTyping, o
           if (typeof data.info.currentTime === 'number' && !isNaN(data.info.currentTime)) {
             ytMsgTimeRef.current = data.info.currentTime
             ytMsgPerfRef.current = performance.now()
-            if (!ytPlayerReadyRef.current) {
-              setIsYtConnected(true)
-            }
           }
           if (data.info.playerState === 1) {
             setIsKaraokePlaying(true)
@@ -375,7 +371,6 @@ export const MusicClipsView: React.FC<MusicClipsViewProps> = ({ onStartTyping, o
             onReady: () => {
               if (!cancelled) {
                 ytPlayerReadyRef.current = true
-                setIsYtConnected(true)
               }
             },
             onStateChange: event => {
@@ -943,20 +938,6 @@ export const MusicClipsView: React.FC<MusicClipsViewProps> = ({ onStartTyping, o
                     <span>
                       {currentSong.artist} — {currentSong.title}
                     </span>
-                    <span
-                      className={`text-[10px] px-1.5 py-0.5 rounded font-mono font-normal border flex items-center gap-1 ${
-                        isYtConnected
-                          ? 'bg-emerald-500/15 text-emerald-300 border-emerald-400/25'
-                          : 'bg-sky-500/15 text-sky-300 border-sky-500/20'
-                      }`}
-                    >
-                      <span
-                        className={`w-1.5 h-1.5 rounded-full ${
-                          isYtConnected ? 'bg-emerald-400 shadow-[0_0_6px_#34d399]' : 'bg-sky-400 animate-pulse'
-                        }`}
-                      />
-                      {isYtConnected ? 'YouTube Sync Active' : 'Clip Sync'}
-                    </span>
                   </h3>
                   <p className="text-[11px] text-sky-400 font-mono mt-0.5">{currentSong.grammarFocus}</p>
                 </div>
@@ -1294,7 +1275,7 @@ export const MusicClipsView: React.FC<MusicClipsViewProps> = ({ onStartTyping, o
                     title="Клик по любому слову открывает перевод и сохранение в словарь"
                   >
                     <Languages className="w-3 h-3" />
-                    <span>Перевод: {translateOnClick ? 'ВКЛ' : 'ВЫКЛ'}</span>
+                    <span>Словарь по клику: {translateOnClick ? 'ВКЛ' : 'ВЫКЛ'}</span>
                   </button>
 
                   {/* Calibration offset controls */}
