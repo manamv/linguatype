@@ -8,7 +8,7 @@ interface VirtualKeyboardProps {
   heatmapData?: Record<string, number>
 }
 
-export const VirtualKeyboard: React.FC<VirtualKeyboardProps> = (props) => {
+export const VirtualKeyboard: React.FC<VirtualKeyboardProps> = React.memo((props) => {
   const [mode, setMode] = useState<'blindtyping' | 'isometric'>('blindtyping')
 
   const toggleMode = () => setMode(m => m === 'blindtyping' ? 'isometric' : 'blindtyping')
@@ -32,4 +32,4 @@ export const VirtualKeyboard: React.FC<VirtualKeyboardProps> = (props) => {
       )}
     </div>
   )
-}
+})

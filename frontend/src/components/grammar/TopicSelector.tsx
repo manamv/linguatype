@@ -214,7 +214,7 @@ export const TopicSelector: React.FC<TopicSelectorProps> = ({
         {/* Right Stacked Bento Column (5 cols) */}
         <div className="lg:col-span-5 flex flex-col gap-4">
           {/* Top Tile: Live Progress & Mini WPM Sparkline */}
-          <div className="flex-1 rounded-3xl bg-[#090d16]/90 backdrop-blur-xl border border-white/[0.08] p-5 flex flex-col justify-between gap-3 shadow-2xl shadow-black/70">
+          <div className="flex-1 rounded-3xl bg-[#090d16]/95 border border-white/[0.08] p-5 flex flex-col justify-between gap-3 shadow-2xl shadow-black/70">
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-mono uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
                 <TrendingUp className="w-3.5 h-3.5 text-sky-400" />

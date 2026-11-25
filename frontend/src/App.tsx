@@ -193,7 +193,7 @@ export function App() {
   return (
     <div className="min-h-screen flex flex-col bg-[#060911] bg-[radial-gradient(ellipse_85%_55%_at_50%_-10%,rgba(56,189,248,0.15),rgba(6,9,17,0)),radial-gradient(ellipse_60%_40%_at_85%_95%,rgba(99,102,241,0.06),rgba(6,9,17,0))] text-slate-100">
       {/* Top Navbar */}
-      <header className="border-b border-white/[0.07] bg-[#060911]/85 backdrop-blur-2xl sticky top-0 z-40 px-6 py-2.5 shrink-0 shadow-2xl shadow-black/80">
+      <header className="border-b border-white/[0.07] bg-[#060911]/92 backdrop-blur-sm sticky top-0 z-40 px-6 py-2.5 shrink-0 shadow-2xl shadow-black/80">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           {/* Logo & Product Name */}
           <div 

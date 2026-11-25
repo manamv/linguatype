@@ -240,7 +240,7 @@ const REST_POSITIONS: Record<FingerType, { x: number; y: number }> = (() => {
   }
 })()
 
-export const BlindTypingKeyboard: React.FC<BlindTypingKeyboardProps> = ({
+export const BlindTypingKeyboard: React.FC<BlindTypingKeyboardProps> = React.memo(({
   activeChar,
   heatmapMode = false,
   heatmapData = {},
@@ -354,18 +354,28 @@ export const BlindTypingKeyboard: React.FC<BlindTypingKeyboardProps> = ({
     return (
       <g
         key={`${fingerType}-${gradientId}`}
-        style={{ transition: 'all 0.13s cubic-bezier(0.22, 1, 0.36, 1)', pointerEvents: 'none' }}
+        style={{ pointerEvents: 'none' }}
       >
-        {/* Active zone-colored outer aura under the finger */}
+        {/* Active zone-colored outer aura under the finger (layered vector glow, 0 blur shader passes) */}
         {isActive && (
-          <path
-            d={fingerPath}
-            fill={zone.activeFill}
-            stroke={zone.glow}
-            strokeWidth={3.5}
-            opacity={0.45}
-            filter="url(#activeFingerGlow)"
-          />
+          <>
+            <path
+              d={fingerPath}
+              fill="none"
+              stroke={zone.glow}
+              strokeWidth={7}
+              strokeLinejoin="round"
+              opacity={0.18}
+            />
+            <path
+              d={fingerPath}
+              fill={zone.activeFill}
+              stroke={zone.glow}
+              strokeWidth={3.2}
+              strokeLinejoin="round"
+              opacity={0.48}
+            />
+          </>
         )}
 
         {/* Main cyber-glass finger body */}
@@ -489,24 +499,9 @@ export const BlindTypingKeyboard: React.FC<BlindTypingKeyboardProps> = ({
 
         <svg
           viewBox="0 0 780 320"
-          className="w-full h-auto max-h-[385px] drop-shadow-2xl"
+          className="w-full h-auto max-h-[385px]"
         >
           <defs>
-            {/* Glow filter for active illuminated key */}
-            <filter id="activeKeyGlow" x="-25%" y="-25%" width="150%" height="150%">
-              <feDropShadow dx="0" dy="0" stdDeviation="5" floodColor="#ffffff" floodOpacity="0.85" />
-              <feDropShadow dx="0" dy="2" stdDeviation="12" floodColor="#38bdf8" floodOpacity="0.55" />
-            </filter>
-
-            {/* Soft volumetric aura for active finger */}
-            <filter id="activeFingerGlow" x="-30%" y="-30%" width="160%" height="160%">
-              <feGaussianBlur stdDeviation="4.5" result="blur" />
-              <feMerge>
-                <feMergeNode in="blur" />
-                <feMergeNode in="SourceGraphic" />
-              </feMerge>
-            </filter>
-
             {/* Translucent Cyber-Glass Hand Gradients with smooth wrist fade-out */}
             <linearGradient id="handGlassLeft" x1="20%" y1="100%" x2="55%" y2="0%">
               <stop offset="0%" stopColor="#070b14" stopOpacity="0.05" />
@@ -540,7 +535,6 @@ export const BlindTypingKeyboard: React.FC<BlindTypingKeyboardProps> = ({
               let stroke = zone.border
               let textFill = zone.text
               let strokeWidth = 1.15
-              let filter: string | undefined
 
               if (heatmapMode && errRate !== undefined) {
                 if (errRate > 0.25) {
@@ -561,7 +555,6 @@ export const BlindTypingKeyboard: React.FC<BlindTypingKeyboardProps> = ({
                 stroke = zone.glow
                 textFill = '#090d16'
                 strokeWidth = 2.4
-                filter = 'url(#activeKeyGlow)'
               }
 
               const isHomeKey = k.id === 'f' || k.id === 'j'
@@ -572,6 +565,22 @@ export const BlindTypingKeyboard: React.FC<BlindTypingKeyboardProps> = ({
                   data-testid={k.id === ' ' ? 'key-space' : `key-${k.id.toLowerCase()}`}
                   className="cursor-default"
                 >
+                  {/* Fast layered neon halo for active key (replaces expensive SVG feDropShadow) */}
+                  {isMatch && !heatmapMode && (
+                    <rect
+                      x={k.x - 3}
+                      y={k.y - 2}
+                      width={k.w + 6}
+                      height={k.h + 6}
+                      rx={12}
+                      ry={12}
+                      fill="none"
+                      stroke={zone.glow}
+                      strokeWidth={4}
+                      opacity={0.45}
+                    />
+                  )}
+
                   {/* Subtle keycap under-shadow */}
                   <rect
                     x={k.x}
@@ -594,8 +603,6 @@ export const BlindTypingKeyboard: React.FC<BlindTypingKeyboardProps> = ({
                     fill={fill}
                     stroke={stroke}
                     strokeWidth={strokeWidth}
-                    filter={filter}
-                    style={{ transition: 'all 0.11s ease' }}
                   />
 
                   {/* Subtle top specular glass edge */}
@@ -620,7 +627,7 @@ export const BlindTypingKeyboard: React.FC<BlindTypingKeyboardProps> = ({
                     fontSize={k.w > 100 ? '11' : '15'}
                     fontWeight={isMatch ? '800' : '600'}
                     fontFamily="monospace"
-                    style={{ transition: 'all 0.11s ease', pointerEvents: 'none' }}
+                    style={{ pointerEvents: 'none' }}
                   >
                     {k.label}
                   </text>
@@ -699,4 +706,4 @@ export const BlindTypingKeyboard: React.FC<BlindTypingKeyboardProps> = ({
       </div>
     </div>
   )
-}
+})

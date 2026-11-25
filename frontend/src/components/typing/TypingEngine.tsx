@@ -25,7 +25,6 @@ export const TypingEngine: React.FC<TypingEngineProps> = ({
   const [sessionWeakKeys, setSessionWeakKeys] = useState<Set<string>>(new Set())
   const [startTime, setStartTime] = useState<number | null>(null)
   const [sentenceStartTime, setSentenceStartTime] = useState<number | null>(null)
-  const [sentenceElapsedTime, setSentenceElapsedTime] = useState<number>(0)
   const [isPaused, setIsPaused] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [keySoundEnabled, setKeySoundEnabled] = useState<boolean>(() => soundService.isKeySoundEnabled())
@@ -41,11 +40,13 @@ export const TypingEngine: React.FC<TypingEngineProps> = ({
   const currentSentence = lesson.sentences[currentSentenceIndex] || lesson.sentences[0]
   // Normalize target text: strictly lowercase, no punctuation
   const targetText = currentSentence ? currentSentence.english.toLowerCase() : ''
+  const targetChars = useMemo(() => targetText.split(''), [targetText])
   const targetWords = useMemo(() => targetText.split(' ').filter(Boolean), [targetText])
 
   // Double-submit prevention ref
   const submitLockRef = useRef(false)
   const rateMenuRef = useRef<HTMLDivElement>(null)
+  const stopwatchDisplayRef = useRef<HTMLSpanElement>(null)
   const typedCharsRef = useRef(typedChars)
   typedCharsRef.current = typedChars
 
@@ -61,12 +62,18 @@ export const TypingEngine: React.FC<TypingEngineProps> = ({
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [showRateMenu])
 
-  // Stopwatch timer for current sentence
+  // Stopwatch timer for current sentence — updates DOM directly to avoid 10Hz React re-renders
   useEffect(() => {
-    if (!sentenceStartTime || isPaused || isSubmitting) return
+    if (!sentenceStartTime) {
+      if (stopwatchDisplayRef.current) stopwatchDisplayRef.current.textContent = '00:00.0'
+      return
+    }
+    if (isPaused || isSubmitting) return
 
     const timer = setInterval(() => {
-      setSentenceElapsedTime(Date.now() - sentenceStartTime)
+      if (stopwatchDisplayRef.current) {
+        stopwatchDisplayRef.current.textContent = formatStopwatch(Date.now() - sentenceStartTime)
+      }
     }, 100)
 
     return () => clearInterval(timer)
@@ -235,7 +242,7 @@ export const TypingEngine: React.FC<TypingEngineProps> = ({
               setTypedChars('')
               setSelectedWord(null)
               setSentenceStartTime(null)
-              setSentenceElapsedTime(0)
+              if (stopwatchDisplayRef.current) stopwatchDisplayRef.current.textContent = '00:00.0'
 
               // Word-by-word: pronounce first word of next sentence
               if (wordByWordMode) {
@@ -313,7 +320,7 @@ export const TypingEngine: React.FC<TypingEngineProps> = ({
           <div className="flex items-center space-x-1" data-testid="metric-stopwatch">
             <Timer className="w-3.5 h-3.5 text-amber-400" />
             <span className="text-slate-500 text-[10px]">ВРЕМЯ</span>
-            <span className="text-amber-400 font-bold">{formatStopwatch(sentenceElapsedTime)}</span>
+            <span ref={stopwatchDisplayRef} className="text-amber-400 font-bold">00:00.0</span>
           </div>
           <div className="flex items-center space-x-1" data-testid="metric-wpm">
             <span className="text-slate-500 text-[10px]">WPM</span>
@@ -471,7 +478,7 @@ export const TypingEngine: React.FC<TypingEngineProps> = ({
               setCombo(0)
               setSelectedWord(null)
               setSentenceStartTime(null)
-              setSentenceElapsedTime(0)
+              if (stopwatchDisplayRef.current) stopwatchDisplayRef.current.textContent = '00:00.0'
             }}
             className="p-1.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-slate-400 hover:text-white border border-white/[0.08] transition cursor-pointer"
             title="Сбросить предложение"
@@ -561,7 +568,7 @@ export const TypingEngine: React.FC<TypingEngineProps> = ({
           className="font-mono text-lg sm:text-xl tracking-wide select-text cursor-text leading-[2.3rem] min-h-[6.9rem] whitespace-pre-wrap break-words content-start pb-1"
           data-testid="typing-text-display"
         >
-          {targetText.split('').map((char, idx) => {
+          {targetChars.map((char, idx) => {
             let charClass = 'text-slate-500' // Untyped
             let isCurrent = false
             let isError = false
