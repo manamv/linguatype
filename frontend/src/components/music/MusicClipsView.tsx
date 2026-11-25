@@ -28,7 +28,9 @@ import {
   Snowflake,
   Library,
   BookmarkPlus,
-  Check
+  Check,
+  Trophy,
+  Brain
 } from 'lucide-react'
 import type { MusicLesson, LessonData } from '../../types'
 import { api } from '../../services/api'
@@ -38,6 +40,8 @@ import { useWordSelection } from '../../hooks/useWordSelection'
 import { normalizeEnglishWord } from '../../utils/dictionary'
 import { SONG_VOCABULARY, type SongVocabItem } from '../../data/songVocabulary'
 import { AI_SONG_ANALYSES } from '../../data/songAiAnalysis'
+import { buildSongQuizQuestions } from '../../data/songQuiz'
+import { songProgressService, type SongBestRecord } from '../../services/songProgress'
 
 interface YTPlayerInstance {
   playVideo?: () => void
@@ -149,9 +153,16 @@ export const MusicClipsView: React.FC<MusicClipsViewProps> = ({ onStartTyping, o
   const [selectedSongId, setSelectedSongId] = useState<string>('queen-champions')
   const [currentSong, setCurrentSong] = useState<MusicLesson | null>(null)
   const [isLoading, setIsLoading] = useState<boolean>(true)
-  const [activeTab, setActiveTab] = useState<'grammar' | 'vocab' | 'ai-meaning'>('grammar')
+  const [activeTab, setActiveTab] = useState<'grammar' | 'vocab' | 'quiz' | 'ai-meaning'>('grammar')
   const [savedVocabWords, setSavedVocabWords] = useState<Record<string, boolean>>({})
   const [savingVocabWord, setSavingVocabWord] = useState<string | null>(null)
+
+  // Per-song personal best records & Comprehension Quiz state
+  const [songRecords, setSongRecords] = useState<Record<string, SongBestRecord>>(() => songProgressService.getAll())
+  const [quizIndex, setQuizIndex] = useState<number>(0)
+  const [quizSelectedOption, setQuizSelectedOption] = useState<number | null>(null)
+  const [quizScore, setQuizScore] = useState<number>(0)
+  const [quizFinished, setQuizFinished] = useState<boolean>(false)
 
   // Scalable Music Catalog state (CEFR level filter, search, collapsible drawer)
   const [selectedLevelFilter, setSelectedLevelFilter] = useState<string>('ALL')
@@ -292,6 +303,11 @@ export const MusicClipsView: React.FC<MusicClipsViewProps> = ({ onStartTyping, o
         dictationPhaseRef.current = 'LISTENING'
         dictationPausedLineIdRef.current = -1
         setDictationShowHint(false)
+        setQuizIndex(0)
+        setQuizSelectedOption(null)
+        setQuizScore(0)
+        setQuizFinished(false)
+        setSongRecords(songProgressService.getAll())
         if (timeDisplayRef.current) {
           timeDisplayRef.current.textContent = '0.0 сек'
         }
@@ -806,7 +822,12 @@ export const MusicClipsView: React.FC<MusicClipsViewProps> = ({ onStartTyping, o
 
         if (next === expectedLine) {
           setLineCleared(true)
-          setLinesClearedCount(c => c + 1)
+          setLinesClearedCount(c => {
+            const updatedCount = c + 1
+            const rec = songProgressService.recordRhythmLines(selectedSongId, updatedCount)
+            setSongRecords(prev => ({ ...prev, [selectedSongId]: rec }))
+            return updatedCount
+          })
           setRhythmCombo(c => c + 1)
           soundService.playQuizCorrect()
 
@@ -825,6 +846,40 @@ export const MusicClipsView: React.FC<MusicClipsViewProps> = ({ onStartTyping, o
 
   const aiAnalysis = AI_SONG_ANALYSES[selectedSongId] || AI_SONG_ANALYSES['queen-champions']
   const songVocab: SongVocabItem[] = SONG_VOCABULARY[selectedSongId] || SONG_VOCABULARY['queen-champions']
+  const songQuizQuestions = useMemo(() => buildSongQuizQuestions(selectedSongId), [selectedSongId])
+  const currentSongRecord = songRecords[selectedSongId]
+
+  const handleSelectQuizOption = (optionIdx: number) => {
+    if (quizSelectedOption !== null) return
+    const q = songQuizQuestions[quizIndex]
+    if (!q) return
+    setQuizSelectedOption(optionIdx)
+    if (optionIdx === q.correctIndex) {
+      setQuizScore(s => s + 1)
+      soundService.playQuizCorrect()
+    } else {
+      soundService.playQuizWrong()
+    }
+  }
+
+  const handleNextQuizQuestion = () => {
+    if (quizIndex + 1 < songQuizQuestions.length) {
+      setQuizIndex(i => i + 1)
+      setQuizSelectedOption(null)
+    } else {
+      setQuizFinished(true)
+      const rec = songProgressService.recordQuizScore(selectedSongId, quizScore, songQuizQuestions.length)
+      setSongRecords(prev => ({ ...prev, [selectedSongId]: rec }))
+      soundService.playCompletionChime()
+    }
+  }
+
+  const handleRestartSongQuiz = () => {
+    setQuizIndex(0)
+    setQuizSelectedOption(null)
+    setQuizScore(0)
+    setQuizFinished(false)
+  }
 
   const handleSaveSongVocabWord = async (item: SongVocabItem) => {
     if (savedVocabWords[item.word] || savingVocabWord === item.word) return
@@ -1125,6 +1180,7 @@ export const MusicClipsView: React.FC<MusicClipsViewProps> = ({ onStartTyping, o
                         {group.items.map(song => {
                           const isSelected = song.id === selectedSongId
                           const isChristmas = song.id === 'wham-last-christmas'
+                          const rec = songRecords[song.id]
                           return (
                             <button
                               key={song.id}
@@ -1152,6 +1208,30 @@ export const MusicClipsView: React.FC<MusicClipsViewProps> = ({ onStartTyping, o
                                   {song.level}
                                 </span>
                               </div>
+
+                              {rec && (rec.bestWpm || rec.bestQuizTotal || rec.bestRhythmLines) && (
+                                <div
+                                  className="flex flex-wrap items-center gap-1.5 text-[10px] font-mono"
+                                  data-testid={`song-record-${song.id}`}
+                                >
+                                  {rec.bestWpm ? (
+                                    <span className="px-1.5 py-0.5 rounded-md bg-amber-500/15 text-amber-300 border border-amber-400/25 flex items-center gap-1">
+                                      <Trophy className="w-2.5 h-2.5" />
+                                      {rec.bestWpm} WPM
+                                    </span>
+                                  ) : null}
+                                  {rec.bestQuizTotal ? (
+                                    <span className="px-1.5 py-0.5 rounded-md bg-purple-500/15 text-purple-300 border border-purple-400/25">
+                                      🧠 {rec.bestQuizScore}/{rec.bestQuizTotal}
+                                    </span>
+                                  ) : null}
+                                  {rec.bestRhythmLines ? (
+                                    <span className="px-1.5 py-0.5 rounded-md bg-emerald-500/15 text-emerald-300 border border-emerald-400/25">
+                                      ✓ {rec.bestRhythmLines} стр.
+                                    </span>
+                                  ) : null}
+                                </div>
+                              )}
 
                               <div className="flex items-center justify-between gap-2 w-full pt-1 border-t border-white/[0.05]">
                                 <span className="text-[10px] font-mono text-sky-300/80 truncate">
@@ -1194,10 +1274,25 @@ export const MusicClipsView: React.FC<MusicClipsViewProps> = ({ onStartTyping, o
               {/* Player Header bar & Karaoke Controls */}
               <div className="p-3.5 bg-white/[0.02] flex flex-wrap items-center justify-between gap-2 border-t border-white/[0.06]">
                 <div>
-                  <h3 className="text-xs font-bold text-white flex items-center gap-2">
+                  <h3 className="text-xs font-bold text-white flex flex-wrap items-center gap-2">
                     <span>
                       {currentSong.artist} — {currentSong.title}
                     </span>
+                    {currentSongRecord && (currentSongRecord.bestWpm || currentSongRecord.bestQuizTotal) && (
+                      <span
+                        className="inline-flex items-center gap-1.5 text-[10px] font-mono px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-400/30"
+                        data-testid="active-song-best-badge"
+                      >
+                        <Trophy className="w-3 h-3" />
+                        <span>
+                          Рекорд:
+                          {currentSongRecord.bestWpm ? ` ${currentSongRecord.bestWpm} WPM` : ''}
+                          {currentSongRecord.bestQuizTotal
+                            ? ` • Тест ${currentSongRecord.bestQuizScore}/${currentSongRecord.bestQuizTotal}`
+                            : ''}
+                        </span>
+                      </span>
+                    )}
                   </h3>
                   <p className="text-[11px] text-sky-400 font-mono mt-0.5">{currentSong.grammarFocus}</p>
                 </div>
@@ -1706,11 +1801,11 @@ export const MusicClipsView: React.FC<MusicClipsViewProps> = ({ onStartTyping, o
           {/* RIGHT COLUMN: Expanded Grammar Breakdown vs AI Meaning Analysis Tabs */}
           <div className="lg:col-span-5 space-y-3">
             <div className="p-5 rounded-3xl bg-[#090d16] border border-white/[0.08] space-y-4 shadow-2xl">
-              {/* Tab Switcher: Grammar vs Song Vocabulary vs AI Meaning */}
-              <div className="flex items-center gap-1 p-1 bg-white/[0.03] rounded-xl border border-white/[0.06] text-[11px] font-mono">
+              {/* Tab Switcher: Grammar | Vocabulary | Comprehension Quiz | AI Meaning */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-1 p-1 bg-white/[0.03] rounded-xl border border-white/[0.06] text-[11px] font-mono">
                 <button
                   onClick={() => setActiveTab('grammar')}
-                  className={`flex-1 py-2 px-1.5 rounded-lg transition-all flex items-center justify-center space-x-1 cursor-pointer ${
+                  className={`py-2 px-1.5 rounded-lg transition-all flex items-center justify-center space-x-1 cursor-pointer ${
                     activeTab === 'grammar'
                       ? 'bg-white/[0.1] text-white font-semibold shadow-sm border border-white/[0.1]'
                       : 'text-slate-400 hover:text-white'
@@ -1723,7 +1818,7 @@ export const MusicClipsView: React.FC<MusicClipsViewProps> = ({ onStartTyping, o
 
                 <button
                   onClick={() => setActiveTab('vocab')}
-                  className={`flex-1 py-2 px-1.5 rounded-lg transition-all flex items-center justify-center space-x-1 cursor-pointer ${
+                  className={`py-2 px-1.5 rounded-lg transition-all flex items-center justify-center space-x-1 cursor-pointer ${
                     activeTab === 'vocab'
                       ? 'bg-white/[0.1] text-white font-semibold shadow-sm border border-white/[0.1]'
                       : 'text-slate-400 hover:text-white'
@@ -1735,8 +1830,21 @@ export const MusicClipsView: React.FC<MusicClipsViewProps> = ({ onStartTyping, o
                 </button>
 
                 <button
+                  onClick={() => setActiveTab('quiz')}
+                  className={`py-2 px-1.5 rounded-lg transition-all flex items-center justify-center space-x-1 cursor-pointer ${
+                    activeTab === 'quiz'
+                      ? 'bg-purple-500/20 text-purple-200 font-semibold shadow-sm border border-purple-400/35'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                  data-testid="tab-song-quiz"
+                >
+                  <Brain className="w-3.5 h-3.5 shrink-0 text-purple-400" />
+                  <span className="truncate">Тест ({songQuizQuestions.length})</span>
+                </button>
+
+                <button
                   onClick={() => setActiveTab('ai-meaning')}
-                  className={`flex-1 py-2 px-1.5 rounded-lg transition-all flex items-center justify-center space-x-1 cursor-pointer ${
+                  className={`py-2 px-1.5 rounded-lg transition-all flex items-center justify-center space-x-1 cursor-pointer ${
                     activeTab === 'ai-meaning'
                       ? 'bg-white/[0.1] text-white font-semibold shadow-sm border border-white/[0.1]'
                       : 'text-slate-400 hover:text-white'
@@ -1862,7 +1970,113 @@ export const MusicClipsView: React.FC<MusicClipsViewProps> = ({ onStartTyping, o
                 </div>
               )}
 
-              {/* TAB 3: AI DEEP MEANING & CULTURAL CONTEXT */}
+              {/* TAB 3: SONG COMPREHENSION QUIZ (Complex Words + Figurative Quotes / Idioms) */}
+              {activeTab === 'quiz' && (
+                <div className="space-y-3 animate-fade-in" data-testid="song-quiz-content">
+                  {quizFinished ? (
+                    <div
+                      className="p-5 rounded-2xl bg-gradient-to-b from-purple-500/15 to-[#050810] border border-purple-400/30 text-center space-y-3"
+                      data-testid="song-quiz-result"
+                    >
+                      <div className="w-12 h-12 rounded-2xl bg-amber-500/15 border border-amber-400/35 text-amber-300 flex items-center justify-center mx-auto">
+                        <Trophy className="w-6 h-6" />
+                      </div>
+                      <div>
+                        <div className="text-sm font-bold text-white">Тест на понимание песни завершён!</div>
+                        <div className="text-2xl font-black font-mono text-purple-300 mt-1">
+                          {quizScore} / {songQuizQuestions.length}
+                        </div>
+                        <p className="text-xs text-slate-400 mt-1">
+                          Лучший результат по «{currentSong.title}» автоматически сохранён.
+                        </p>
+                      </div>
+                      <button
+                        onClick={handleRestartSongQuiz}
+                        className="px-4 py-2 rounded-xl bg-purple-500/20 hover:bg-purple-500/30 text-purple-200 border border-purple-400/35 text-xs font-mono font-bold transition cursor-pointer"
+                        data-testid="song-quiz-restart-btn"
+                      >
+                        Пройти тест заново
+                      </button>
+                    </div>
+                  ) : (
+                    (() => {
+                      const q = songQuizQuestions[quizIndex]
+                      if (!q) return null
+                      const isAnswered = quizSelectedOption !== null
+                      return (
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between text-[11px] font-mono">
+                            <span className="px-2.5 py-0.5 rounded-full bg-purple-500/15 text-purple-300 border border-purple-400/30">
+                              {q.badge}
+                            </span>
+                            <span className="text-slate-400">
+                              Вопрос {quizIndex + 1} / {songQuizQuestions.length} • Счёт: {quizScore}
+                            </span>
+                          </div>
+
+                          <div className="p-4 rounded-2xl bg-[#050810] border border-white/[0.08] space-y-2">
+                            <div className="text-base font-bold text-white font-mono leading-snug">{q.prompt}</div>
+                            {q.subPrompt && <div className="text-[11px] text-slate-400">{q.subPrompt}</div>}
+                            {q.contextQuote && (
+                              <div className="text-xs font-mono text-sky-300/90 bg-white/[0.03] px-3 py-2 rounded-xl border border-white/[0.06]">
+                                «{q.contextQuote}»
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="space-y-2">
+                            {q.options.map((opt, idx) => {
+                              let optCls =
+                                'bg-white/[0.03] border-white/[0.08] text-slate-200 hover:bg-white/[0.07] hover:border-purple-400/40'
+                              if (isAnswered) {
+                                if (idx === q.correctIndex) {
+                                  optCls = 'bg-emerald-500/20 border-emerald-400/60 text-emerald-200 font-semibold'
+                                } else if (idx === quizSelectedOption) {
+                                  optCls = 'bg-rose-500/20 border-rose-400/60 text-rose-200'
+                                } else {
+                                  optCls = 'bg-white/[0.015] border-white/[0.05] text-slate-500'
+                                }
+                              }
+                              return (
+                                <button
+                                  key={idx}
+                                  onClick={() => handleSelectQuizOption(idx)}
+                                  disabled={isAnswered}
+                                  className={`w-full p-3 rounded-xl border text-left text-xs leading-relaxed transition cursor-pointer flex items-start gap-2.5 ${optCls}`}
+                                  data-testid={`song-quiz-option-${idx}`}
+                                >
+                                  <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-white/[0.06] text-slate-300 shrink-0 mt-0.5">
+                                    {String.fromCharCode(65 + idx)}
+                                  </span>
+                                  <span>{opt}</span>
+                                </button>
+                              )
+                            })}
+                          </div>
+
+                          {isAnswered && (
+                            <div
+                              className="p-3.5 rounded-2xl bg-white/[0.03] border border-white/[0.09] space-y-2.5"
+                              data-testid="song-quiz-feedback"
+                            >
+                              <div className="text-xs text-slate-200 leading-relaxed">{q.explanation}</div>
+                              <button
+                                onClick={handleNextQuizQuestion}
+                                className="w-full py-2.5 rounded-xl bg-purple-500 hover:bg-purple-400 text-white font-bold text-xs transition cursor-pointer"
+                                data-testid="song-quiz-next-btn"
+                              >
+                                {quizIndex + 1 < songQuizQuestions.length ? 'Следующий вопрос →' : 'Завершить и сохранить результат'}
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      )
+                    })()
+                  )}
+                </div>
+              )}
+
+              {/* TAB 4: AI DEEP MEANING & CULTURAL CONTEXT */}
               {activeTab === 'ai-meaning' && (
                 <div className="space-y-3 animate-fade-in max-h-[610px] overflow-y-auto pr-1.5" data-testid="ai-meaning-content">
                   <div className="p-4 rounded-2xl bg-gradient-to-r from-indigo-500/10 via-transparent to-sky-500/10 border border-white/[0.08] space-y-2">

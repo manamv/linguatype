@@ -12,6 +12,7 @@ import { MusicClipsView } from './components/music/MusicClipsView'
 import { AchievementsModal } from './components/achievements/AchievementsModal'
 import { achievementsService } from './services/achievements'
 import { weakKeysService } from './services/weakKeys'
+import { songProgressService } from './services/songProgress'
 import { LoadingState } from './components/states/LoadingState'
 import { EmptyState } from './components/states/EmptyState'
 import { ErrorState } from './components/states/ErrorState'
@@ -125,6 +126,9 @@ export function App() {
       errors: stats.errors,
       topicTitle: currentLesson?.title || stats.topicId
     })
+    if (stats.topicId.startsWith('music-')) {
+      songProgressService.recordTypingResult(stats.topicId.replace(/^music-/, ''), stats.wpm, stats.accuracy)
+    }
     try {
       await api.saveStats(stats)
       // Refresh summary

@@ -5,6 +5,7 @@ import { Card } from '../components/ui/Card'
 import { Badge } from '../components/ui/Badge'
 import { TopicSelector } from '../components/grammar/TopicSelector'
 import { MusicClipsView } from '../components/music/MusicClipsView'
+import { VocabularyView } from '../components/vocabulary/VocabularyView'
 
 describe('Design System (shadcn/ui) & Scalable Music Catalog Tests', () => {
   it('Button (shadcn/ui): renders variants, prevents clicks while loading, and preserves focus-visible ring', () => {
@@ -234,5 +235,63 @@ describe('Design System (shadcn/ui) & Scalable Music Catalog Tests', () => {
     await waitFor(() => {
       expect(screen.getByTestId('save-song-vocab-devoid-of')).toHaveTextContent(/В словаре/i)
     })
+  })
+
+  it('MusicClipsView: completes Song Comprehension Quiz (words + idioms) and persists best song score', async () => {
+    window.localStorage.clear()
+    render(<MusicClipsView onStartTyping={vi.fn()} />)
+
+    // Select Wham! - Last Christmas and open Comprehension Quiz tab
+    fireEvent.click(await screen.findByTestId('song-tab-wham-last-christmas'))
+    fireEvent.click(await screen.findByTestId('tab-song-quiz'))
+    expect(await screen.findByTestId('song-quiz-content')).toBeInTheDocument()
+
+    // Complete all 5 questions (3 complex words + 2 figurative idioms)
+    for (let i = 0; i < 5; i++) {
+      fireEvent.click(await screen.findByTestId('song-quiz-option-0'))
+      expect(await screen.findByTestId('song-quiz-feedback')).toBeInTheDocument()
+      fireEvent.click(screen.getByTestId('song-quiz-next-btn'))
+    }
+
+    // Quiz result screen appears and best score badge is persisted on the song card
+    expect(await screen.findByTestId('song-quiz-result')).toBeInTheDocument()
+    expect(await screen.findByTestId('song-record-wham-last-christmas')).toHaveTextContent(/\/5/)
+  })
+
+  it('VocabularyView: groups words semantically and supports 3D Flashcards memorization mode', () => {
+    const sampleWords = [
+      { id: '1', word: 'pay my dues', translation: 'заплатить по счетам', phonetic: '/peɪ maɪ djuːz/', partOfSpeech: 'idiom', mistakeCount: 1 },
+      { id: '2', word: 'thoroughly', translation: 'тщательно', phonetic: '/ˈθʌr.ə.li/', partOfSpeech: 'adverb', mistakeCount: 2 },
+      { id: '3', word: 'legacy', translation: 'наследие', phonetic: '/ˈleɡ.ə.si/', partOfSpeech: 'noun', mistakeCount: 0 }
+    ]
+
+    render(
+      <VocabularyView
+        words={sampleWords}
+        onAddWord={vi.fn()}
+        onDeleteWord={vi.fn()}
+        onStartVocabularyPractice={vi.fn()}
+      />
+    )
+
+    // Semantic groups are rendered
+    expect(screen.getByTestId('vocab-group-idioms')).toBeInTheDocument()
+    expect(screen.getByTestId('vocab-group-qualities')).toBeInTheDocument()
+    expect(screen.getByTestId('vocab-group-concepts')).toBeInTheDocument()
+
+    // Filter to idioms only
+    fireEvent.click(screen.getByTestId('vocab-filter-idioms'))
+    expect(screen.getByTestId('word-item-pay my dues')).toBeInTheDocument()
+    expect(screen.queryByTestId('word-item-legacy')).not.toBeInTheDocument()
+
+    // Reset filter to ALL and switch to 3D Flashcards mode
+    fireEvent.click(screen.getByTestId('vocab-filter-ALL'))
+    fireEvent.click(screen.getByTestId('vocab-mode-flashcards'))
+    expect(screen.getByTestId('vocab-flashcards-mode')).toBeInTheDocument()
+
+    // Flip card and mark as known
+    fireEvent.click(screen.getByTestId('flashcard-card'))
+    fireEvent.click(screen.getByTestId('flashcard-know-btn'))
+    expect(screen.getByText(/Выучено: 1 \/ 3/i)).toBeInTheDocument()
   })
 })
