@@ -864,10 +864,12 @@ export const MusicClipsView: React.FC<MusicClipsViewProps> = ({ onStartTyping, o
       const containerHeight = container.clientHeight
 
       if (elTop < containerScrollTop || elTop + elHeight > containerScrollTop + containerHeight - 10) {
-        container.scrollTo({
-          top: Math.max(0, elTop - 24),
-          behavior: 'smooth'
-        })
+        if (typeof container.scrollTo === 'function') {
+          container.scrollTo({
+            top: Math.max(0, elTop - 24),
+            behavior: 'smooth'
+          })
+        }
       }
     }
   }, [activeSubtitleId])
