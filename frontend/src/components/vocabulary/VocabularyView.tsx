@@ -19,6 +19,7 @@ import type { VocabularyWord } from '../../types'
 import { Card } from '../ui/Card'
 import { Button } from '../ui/Button'
 import { soundService } from '../../services/sound'
+import { achievementsService } from '../../services/achievements'
 
 interface VocabularyViewProps {
   words: VocabularyWord[]
@@ -194,7 +195,12 @@ export const VocabularyView: React.FC<VocabularyViewProps> = ({
 
   const handleMarkKnown = () => {
     if (!activeCard) return
-    setMasteredIds(prev => ({ ...prev, [activeCard.id]: true }))
+    setMasteredIds(prev => {
+      const next = { ...prev, [activeCard.id]: true }
+      const totalMastered = Object.values(next).filter(Boolean).length
+      achievementsService.checkAndUnlock({ flashcardsMastered: totalMastered })
+      return next
+    })
     soundService.playQuizCorrect()
     handleNextCard()
   }

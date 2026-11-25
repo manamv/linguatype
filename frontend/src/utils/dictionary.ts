@@ -1,3 +1,5 @@
+import { EXTRA_DICTIONARY_MAP } from './extraDictionary'
+
 export interface DictEntry {
   translation: string
   phonetic: string
@@ -16,6 +18,7 @@ export function normalizeEnglishWord(raw: string): string {
  * across grammar exercises, quizzes, and song lyrics.
  */
 export const DICTIONARY_MAP: Record<string, DictEntry> = {
+  ...EXTRA_DICTIONARY_MAP,
   // Core Practice & Exercise Words
   insist: { translation: 'настаивать, утверждать', phonetic: '/ɪnˈsɪst/', partOfSpeech: 'verb' },
   interest: { translation: 'интерес, процент', phonetic: '/ˈɪn.trəst/', partOfSpeech: 'noun' },

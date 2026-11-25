@@ -6,6 +6,8 @@ import { Badge } from '../components/ui/Badge'
 import { TopicSelector } from '../components/grammar/TopicSelector'
 import { MusicClipsView } from '../components/music/MusicClipsView'
 import { VocabularyView } from '../components/vocabulary/VocabularyView'
+import { achievementsService } from '../services/achievements'
+import { DICTIONARY_MAP } from '../utils/dictionary'
 
 describe('Design System (shadcn/ui) & Scalable Music Catalog Tests', () => {
   it('Button (shadcn/ui): renders variants, prevents clicks while loading, and preserves focus-visible ring', () => {
@@ -293,5 +295,12 @@ describe('Design System (shadcn/ui) & Scalable Music Catalog Tests', () => {
     fireEvent.click(screen.getByTestId('flashcard-card'))
     fireEvent.click(screen.getByTestId('flashcard-know-btn'))
     expect(screen.getByText(/Выучено: 1 \/ 3/i)).toBeInTheDocument()
+  })
+
+  it('Achievements & Dictionary: provides 18 achievements and full lyric word translations', () => {
+    expect(achievementsService.getAchievements().length).toBeGreaterThanOrEqual(18)
+    for (const word of ['shimmering', 'mouthpiece', 'subliminal', 'estranged', 'devoid', 'conceal', 'bounce']) {
+      expect(DICTIONARY_MAP[word]?.translation).toBeTruthy()
+    }
   })
 })

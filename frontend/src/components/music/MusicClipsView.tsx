@@ -10,7 +10,6 @@ import {
   ChevronDown,
   ChevronUp,
   Headphones,
-  Bot,
   Flame,
   RotateCcw,
   ArrowLeft,
@@ -42,6 +41,7 @@ import { SONG_VOCABULARY, type SongVocabItem } from '../../data/songVocabulary'
 import { AI_SONG_ANALYSES } from '../../data/songAiAnalysis'
 import { buildSongQuizQuestions } from '../../data/songQuiz'
 import { songProgressService, type SongBestRecord } from '../../services/songProgress'
+import { achievementsService } from '../../services/achievements'
 
 interface YTPlayerInstance {
   playVideo?: () => void
@@ -826,6 +826,7 @@ export const MusicClipsView: React.FC<MusicClipsViewProps> = ({ onStartTyping, o
             const updatedCount = c + 1
             const rec = songProgressService.recordRhythmLines(selectedSongId, updatedCount)
             setSongRecords(prev => ({ ...prev, [selectedSongId]: rec }))
+            achievementsService.checkAndUnlock({ rhythmLines: updatedCount })
             return updatedCount
           })
           setRhythmCombo(c => c + 1)
@@ -870,6 +871,9 @@ export const MusicClipsView: React.FC<MusicClipsViewProps> = ({ onStartTyping, o
       setQuizFinished(true)
       const rec = songProgressService.recordQuizScore(selectedSongId, quizScore, songQuizQuestions.length)
       setSongRecords(prev => ({ ...prev, [selectedSongId]: rec }))
+      if (quizScore === songQuizQuestions.length && songQuizQuestions.length > 0) {
+        achievementsService.checkAndUnlock({ songQuizPerfect: true })
+      }
       soundService.playCompletionChime()
     }
   }
@@ -1260,9 +1264,9 @@ export const MusicClipsView: React.FC<MusicClipsViewProps> = ({ onStartTyping, o
         )}
       </div>
 
-      {/* Song Detail Body: 2 Columns */}
+      {/* Song Detail Body: 2 Columns (Equal Height) */}
       {currentSong && !isLoading && (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
           {/* LEFT COLUMN: YouTube Clip + Live Karaoke Spotlight + Synchronized Subtitles */}
           <div className="lg:col-span-7 space-y-4">
             {/* Video Player Card */}
@@ -1798,9 +1802,9 @@ export const MusicClipsView: React.FC<MusicClipsViewProps> = ({ onStartTyping, o
             </div>
           </div>
 
-          {/* RIGHT COLUMN: Expanded Grammar Breakdown vs AI Meaning Analysis Tabs */}
-          <div className="lg:col-span-5 space-y-3">
-            <div className="p-5 rounded-3xl bg-[#090d16] border border-white/[0.08] space-y-4 shadow-2xl">
+          {/* RIGHT COLUMN: Expanded Grammar Breakdown | Song Vocab | Quiz | Meaning (Matches Left Column Height) */}
+          <div className="lg:col-span-5 flex flex-col">
+            <div className="p-5 rounded-3xl bg-[#090d16] border border-white/[0.08] flex flex-col gap-4 shadow-2xl flex-1">
               {/* Tab Switcher: Grammar | Vocabulary | Comprehension Quiz | AI Meaning */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-1 p-1 bg-white/[0.03] rounded-xl border border-white/[0.06] text-[11px] font-mono">
                 <button
@@ -1851,8 +1855,8 @@ export const MusicClipsView: React.FC<MusicClipsViewProps> = ({ onStartTyping, o
                   }`}
                   data-testid="tab-ai-meaning"
                 >
-                  <Bot className="w-3.5 h-3.5 shrink-0" />
-                  <span className="truncate">Смысл от AI</span>
+                  <Sparkles className="w-3.5 h-3.5 shrink-0 text-sky-400" />
+                  <span className="truncate">Смысл песни</span>
                 </button>
               </div>
 
@@ -1869,7 +1873,7 @@ export const MusicClipsView: React.FC<MusicClipsViewProps> = ({ onStartTyping, o
                     </div>
                   </div>
 
-                  <div className="space-y-3 max-h-[560px] overflow-y-auto pr-1.5">
+                  <div className="space-y-3 flex-1 min-h-0 max-h-[720px] overflow-y-auto pr-1.5">
                     {currentSong.grammarBreakdown.map((rule, idx) => (
                       <div
                         key={idx}
@@ -1908,7 +1912,7 @@ export const MusicClipsView: React.FC<MusicClipsViewProps> = ({ onStartTyping, o
                     </p>
                   </div>
 
-                  <div className="space-y-2.5 max-h-[560px] overflow-y-auto pr-1.5">
+                  <div className="space-y-2.5 flex-1 min-h-0 max-h-[720px] overflow-y-auto pr-1.5">
                     {songVocab.map(item => {
                       const isSaved = Boolean(savedVocabWords[item.word])
                       const isSaving = savingVocabWord === item.word
@@ -2076,9 +2080,9 @@ export const MusicClipsView: React.FC<MusicClipsViewProps> = ({ onStartTyping, o
                 </div>
               )}
 
-              {/* TAB 4: AI DEEP MEANING & CULTURAL CONTEXT */}
+              {/* TAB 4: DEEP MEANING & CULTURAL CONTEXT */}
               {activeTab === 'ai-meaning' && (
-                <div className="space-y-3 animate-fade-in max-h-[610px] overflow-y-auto pr-1.5" data-testid="ai-meaning-content">
+                <div className="space-y-3 animate-fade-in flex-1 min-h-0 max-h-[760px] overflow-y-auto pr-1.5" data-testid="ai-meaning-content">
                   <div className="p-4 rounded-2xl bg-gradient-to-r from-indigo-500/10 via-transparent to-sky-500/10 border border-white/[0.08] space-y-2">
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex items-center space-x-1.5 text-indigo-300 text-xs font-bold">
@@ -2147,7 +2151,7 @@ export const MusicClipsView: React.FC<MusicClipsViewProps> = ({ onStartTyping, o
               )}
 
               {/* Start Typing Call to Action */}
-              <div className="pt-2 border-t border-white/[0.06]">
+              <div className="mt-auto pt-3 border-t border-white/[0.06]">
                 <button
                   onClick={handleStartTypingLesson}
                   className="w-full py-3.5 rounded-2xl bg-sky-400 hover:bg-sky-300 text-slate-950 font-bold text-xs shadow-xl shadow-sky-500/25 transition-all flex items-center justify-center space-x-2 cursor-pointer active:scale-[0.98]"

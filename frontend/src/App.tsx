@@ -144,6 +144,7 @@ export function App() {
       accuracy: stats.accuracy,
       errors: stats.errors,
       topicId: stats.topicId,
+      level: currentLesson?.level,
       isMusic: stats.topicId.startsWith('music-'),
       vocabCount: vocabulary.length
     })

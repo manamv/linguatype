@@ -28,6 +28,14 @@ const DEFAULT_ACHIEVEMENTS: Achievement[] = [
     unlocked: false
   },
   {
+    id: 'lightning-100',
+    title: 'Скорость света',
+    description: 'Достигните легендарной скорости 100 WPM и выше',
+    icon: 'Zap',
+    category: 'speed',
+    unlocked: false
+  },
+  {
     id: 'sniper',
     title: 'Снайпер точности',
     description: 'Завершите тренировку с точностью 98% или выше',
@@ -40,6 +48,14 @@ const DEFAULT_ACHIEVEMENTS: Achievement[] = [
     title: 'Абсолютный идеал',
     description: 'Наберите текст с точностью 100% без единой ошибки',
     icon: 'Award',
+    category: 'accuracy',
+    unlocked: false
+  },
+  {
+    id: 'steady-hands',
+    title: 'Железная выдержка',
+    description: 'Наберите текст выше 50 WPM с точностью не ниже 95%',
+    icon: 'Target',
     category: 'accuracy',
     unlocked: false
   },
@@ -60,6 +76,24 @@ const DEFAULT_ACHIEVEMENTS: Achievement[] = [
     unlocked: false
   },
   {
+    id: 'rhythm-master',
+    title: 'В такт музыке',
+    description: 'Пройдите 3 и более строк в режиме Ритм-печати или Диктанта',
+    icon: 'Music',
+    category: 'speed',
+    unlocked: false,
+    progress: 0,
+    maxProgress: 3
+  },
+  {
+    id: 'song-quiz-ace',
+    title: 'Знаток подтекстов',
+    description: 'Пройдите тест на понимание песни без единой ошибки',
+    icon: 'Award',
+    category: 'grammar',
+    unlocked: false
+  },
+  {
     id: 'polyglot',
     title: 'Полиглот',
     description: 'Освойте упражнения по 3 разным грамматическим темам',
@@ -70,9 +104,47 @@ const DEFAULT_ACHIEVEMENTS: Achievement[] = [
     maxProgress: 3
   },
   {
+    id: 'grammar-guru',
+    title: 'Гуру грамматики',
+    description: 'Завершите 6 разных грамматических тем A1–C1',
+    icon: 'BookOpen',
+    category: 'grammar',
+    unlocked: false,
+    progress: 0,
+    maxProgress: 6
+  },
+  {
+    id: 'c1-conqueror',
+    title: 'Покоритель C1',
+    description: 'Пройдите тренировку или песню уровня Advanced (C1)',
+    icon: 'Flame',
+    category: 'grammar',
+    unlocked: false
+  },
+  {
     id: 'vocab-builder',
     title: 'Словарный запас',
     description: 'Сохраните 3 или более слов в личный словарь',
+    icon: 'Star',
+    category: 'special',
+    unlocked: false,
+    progress: 0,
+    maxProgress: 3
+  },
+  {
+    id: 'vocab-collector',
+    title: 'Коллекционер слов',
+    description: 'Соберите 10 и более слов в личном словаре',
+    icon: 'BookOpen',
+    category: 'special',
+    unlocked: false,
+    progress: 0,
+    maxProgress: 10
+  },
+  {
+    id: 'flashcard-scholar',
+    title: 'Мастер карточек',
+    description: 'Выучите 3 слова в режиме 3D-карточек (Flashcards)',
     icon: 'Star',
     category: 'special',
     unlocked: false,
@@ -126,10 +198,14 @@ class AchievementsService {
     accuracy?: number
     errors?: number
     topicId?: string
+    level?: string
     isBlindAudio?: boolean
     isMusic?: boolean
     vocabCount?: number
     isLeaderboard?: boolean
+    rhythmLines?: number
+    songQuizPerfect?: boolean
+    flashcardsMastered?: number
   }): Achievement[] {
     const all = this.getAchievements()
     const newlyUnlocked: Achievement[] = []
@@ -149,21 +225,45 @@ class AchievementsService {
         shouldUnlock = true
       } else if (ach.id === 'supersonic' && context.wpm && context.wpm >= 85) {
         shouldUnlock = true
+      } else if (ach.id === 'lightning-100' && context.wpm && context.wpm >= 100) {
+        shouldUnlock = true
       } else if (ach.id === 'sniper' && context.accuracy && context.accuracy >= 98) {
         shouldUnlock = true
       } else if (ach.id === 'flawless' && context.accuracy && context.accuracy === 100 && context.errors === 0) {
+        shouldUnlock = true
+      } else if (ach.id === 'steady-hands' && context.wpm && context.wpm >= 50 && context.accuracy && context.accuracy >= 95) {
         shouldUnlock = true
       } else if (ach.id === 'blind-ear' && context.isBlindAudio) {
         shouldUnlock = true
       } else if (ach.id === 'rock-star' && context.isMusic) {
         shouldUnlock = true
+      } else if (ach.id === 'rhythm-master' && context.rhythmLines !== undefined) {
+        ach.progress = Math.max(ach.progress ?? 0, context.rhythmLines)
+        if (ach.progress >= 3) shouldUnlock = true
+      } else if (ach.id === 'song-quiz-ace' && context.songQuizPerfect) {
+        shouldUnlock = true
       } else if (ach.id === 'polyglot') {
         const count = this.completedTopics.size
         ach.progress = count
         if (count >= 3) shouldUnlock = true
+      } else if (ach.id === 'grammar-guru') {
+        const count = this.completedTopics.size
+        ach.progress = count
+        if (count >= 6) shouldUnlock = true
+      } else if (
+        ach.id === 'c1-conqueror' &&
+        (context.level?.toUpperCase() === 'C1' || context.topicId?.toLowerCase().startsWith('c1-'))
+      ) {
+        shouldUnlock = true
       } else if (ach.id === 'vocab-builder' && context.vocabCount !== undefined) {
         ach.progress = context.vocabCount
         if (context.vocabCount >= 3) shouldUnlock = true
+      } else if (ach.id === 'vocab-collector' && context.vocabCount !== undefined) {
+        ach.progress = context.vocabCount
+        if (context.vocabCount >= 10) shouldUnlock = true
+      } else if (ach.id === 'flashcard-scholar' && context.flashcardsMastered !== undefined) {
+        ach.progress = Math.max(ach.progress ?? 0, context.flashcardsMastered)
+        if (ach.progress >= 3) shouldUnlock = true
       } else if (ach.id === 'hall-of-fame' && context.isLeaderboard) {
         shouldUnlock = true
       }
