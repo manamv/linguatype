@@ -6,6 +6,7 @@ import { Badge } from '../components/ui/Badge'
 import { TopicSelector } from '../components/grammar/TopicSelector'
 import { MusicClipsView } from '../components/music/MusicClipsView'
 import { VocabularyView } from '../components/vocabulary/VocabularyView'
+import { TypingEngine } from '../components/typing/TypingEngine'
 import { achievementsService } from '../services/achievements'
 import { DICTIONARY_MAP } from '../utils/dictionary'
 
@@ -302,5 +303,26 @@ describe('Design System (shadcn/ui) & Scalable Music Catalog Tests', () => {
     for (const word of ['shimmering', 'mouthpiece', 'subliminal', 'estranged', 'devoid', 'conceal', 'bounce']) {
       expect(DICTIONARY_MAP[word]?.translation).toBeTruthy()
     }
+  })
+
+  it('TypingEngine: shows subtle warning pill on wrong keyboard layout (Cyrillic) and clears on English key', () => {
+    const lesson = {
+      id: 'layout-test',
+      title: 'Layout Guard Test',
+      level: 'A1',
+      description: 'Test',
+      sentences: [{ id: 's1', english: 'hello world', russian: 'привет мир' }]
+    }
+    render(<TypingEngine lesson={lesson} onFinish={vi.fn()} />)
+
+    expect(screen.queryByTestId('keyboard-warning-pill')).not.toBeInTheDocument()
+
+    // Pressing Cyrillic letter triggers wrong-layout pill
+    fireEvent.keyDown(window, { key: 'ф' })
+    expect(screen.getByTestId('wrong-layout-warning')).toBeInTheDocument()
+
+    // Pressing English letter clears wrong-layout pill immediately
+    fireEvent.keyDown(window, { key: 'h' })
+    expect(screen.queryByTestId('wrong-layout-warning')).not.toBeInTheDocument()
   })
 })

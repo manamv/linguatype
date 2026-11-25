@@ -35,7 +35,9 @@ import type { MusicLesson, LessonData } from '../../types'
 import { api } from '../../services/api'
 import { soundService } from '../../services/sound'
 import { WordPopover } from '../typing/WordPopover'
+import { KeyboardGuardPill } from '../typing/KeyboardGuardPill'
 import { useWordSelection } from '../../hooks/useWordSelection'
+import { useKeyboardLayoutGuard } from '../../hooks/useKeyboardLayoutGuard'
 import { normalizeEnglishWord } from '../../utils/dictionary'
 import { SONG_VOCABULARY, type SongVocabItem } from '../../data/songVocabulary'
 import { AI_SONG_ANALYSES } from '../../data/songAiAnalysis'
@@ -190,6 +192,9 @@ export const MusicClipsView: React.FC<MusicClipsViewProps> = ({ onStartTyping, o
 
   // Shared Word Translation Popover (Idea #4)
   const { selectedWord, handleTextSelection, selectWord, clearSelectedWord } = useWordSelection()
+  const { capsLockOn, wrongLayout } = useKeyboardLayoutGuard(
+    musicMode === 'rhythm' || (musicMode === 'dictation' && dictationPhase === 'TYPING')
+  )
 
   // Direct DOM refs for silky 60-FPS updates without React re-render churn
   const ytHostRef = useRef<HTMLDivElement>(null)
@@ -1528,6 +1533,9 @@ export const MusicClipsView: React.FC<MusicClipsViewProps> = ({ onStartTyping, o
                         </div>
                       )}
                     </div>
+
+                    {/* Subtle Caps Lock / Wrong Layout Pill in Rhythm & Dictation Modes */}
+                    <KeyboardGuardPill capsLockOn={capsLockOn} wrongLayout={wrongLayout} />
 
                     {/* Live Character-by-Character Typing Line */}
                     <div

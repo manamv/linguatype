@@ -6,6 +6,8 @@ import { WordPopover } from './WordPopover'
 import { soundService } from '../../services/sound'
 import { weakKeysService } from '../../services/weakKeys'
 import { useWordSelection } from '../../hooks/useWordSelection'
+import { useKeyboardLayoutGuard } from '../../hooks/useKeyboardLayoutGuard'
+import { KeyboardGuardPill } from './KeyboardGuardPill'
 
 interface TypingEngineProps {
   lesson: LessonData
@@ -30,6 +32,7 @@ export const TypingEngine: React.FC<TypingEngineProps> = ({
   const [keySoundEnabled, setKeySoundEnabled] = useState<boolean>(() => soundService.isKeySoundEnabled())
 
   const { selectedWord, setSelectedWord, handleTextSelection: handleSelectionTranslate } = useWordSelection()
+  const { capsLockOn, wrongLayout } = useKeyboardLayoutGuard(!isPaused && !isSubmitting)
 
   // Speech & Visual options
   const [speechRate, setSpeechRate] = useState<number>(1.0)
@@ -488,6 +491,9 @@ export const TypingEngine: React.FC<TypingEngineProps> = ({
           </button>
         </div>
       </div>
+
+      {/* Subtle Caps Lock / Wrong Keyboard Layout Warning */}
+      <KeyboardGuardPill capsLockOn={capsLockOn} wrongLayout={wrongLayout} />
 
       {/* 2. Main Text Display Box (Selection-based Word Translation, No-Scroll) */}
       <div className="relative p-4 sm:p-5 rounded-2xl bg-[#090d16]/95 border border-white/[0.08] shadow-2xl shrink-0 space-y-2 overflow-visible">
