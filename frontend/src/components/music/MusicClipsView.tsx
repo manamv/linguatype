@@ -1810,9 +1810,9 @@ export const MusicClipsView: React.FC<MusicClipsViewProps> = ({ onStartTyping, o
             </div>
           </div>
 
-          {/* RIGHT COLUMN: Expanded Grammar Breakdown | Song Vocab | Quiz | Meaning (Matches Left Column Height) */}
-          <div className="lg:col-span-5 flex flex-col">
-            <div className="p-5 rounded-3xl bg-[#090d16] border border-white/[0.08] flex flex-col gap-4 shadow-2xl flex-1">
+          {/* RIGHT COLUMN: Expanded Grammar Breakdown | Song Vocab | Quiz | Meaning (Exact Left Column Height, Zero Dead Space) */}
+          <div className="lg:col-span-5 relative">
+            <div className="lg:absolute lg:inset-0 p-5 rounded-3xl bg-[#090d16] border border-white/[0.08] flex flex-col gap-4 shadow-2xl">
               {/* Tab Switcher: Grammar | Vocabulary | Comprehension Quiz | Meaning (2x2 clean grid, zero truncation) */}
               <div className="grid grid-cols-2 gap-1.5 p-1.5 bg-white/[0.03] rounded-xl border border-white/[0.06] text-xs font-mono">
                 <button
@@ -1868,10 +1868,10 @@ export const MusicClipsView: React.FC<MusicClipsViewProps> = ({ onStartTyping, o
                 </button>
               </div>
 
-              {/* TAB 1: EXPANDED GRAMMAR BREAKDOWN (Spacious, matches AI Meaning height!) */}
+              {/* TAB 1: EXPANDED GRAMMAR BREAKDOWN */}
               {activeTab === 'grammar' && (
-                <div className="space-y-3 animate-fade-in">
-                  <div className="p-3.5 rounded-2xl bg-gradient-to-r from-sky-500/10 via-transparent to-indigo-500/10 border border-white/[0.08] flex items-center justify-between">
+                <div className="flex-1 min-h-0 flex flex-col gap-3 animate-fade-in">
+                  <div className="p-3.5 rounded-2xl bg-gradient-to-r from-sky-500/10 via-transparent to-indigo-500/10 border border-white/[0.08] flex items-center justify-between shrink-0">
                     <div className="space-y-0.5">
                       <div className="text-xs font-bold text-sky-300 flex items-center gap-1.5">
                         <BookOpen className="w-3.5 h-3.5 text-sky-400" />
@@ -1881,7 +1881,7 @@ export const MusicClipsView: React.FC<MusicClipsViewProps> = ({ onStartTyping, o
                     </div>
                   </div>
 
-                  <div className="space-y-3 flex-1 min-h-0 max-h-[720px] overflow-y-auto pr-1.5">
+                  <div className="space-y-3 flex-1 min-h-0 overflow-y-auto pr-1.5">
                     {currentSong.grammarBreakdown.map((rule, idx) => (
                       <div
                         key={idx}
@@ -1909,8 +1909,8 @@ export const MusicClipsView: React.FC<MusicClipsViewProps> = ({ onStartTyping, o
 
               {/* TAB 2: SONG VOCABULARY (Key Unfamiliar Words + Context from Song) */}
               {activeTab === 'vocab' && (
-                <div className="space-y-3 animate-fade-in" data-testid="song-vocab-content">
-                  <div className="p-3.5 rounded-2xl bg-gradient-to-r from-emerald-500/10 via-transparent to-sky-500/10 border border-white/[0.08]">
+                <div className="flex-1 min-h-0 flex flex-col gap-3 animate-fade-in" data-testid="song-vocab-content">
+                  <div className="p-3.5 rounded-2xl bg-gradient-to-r from-emerald-500/10 via-transparent to-sky-500/10 border border-white/[0.08] shrink-0">
                     <div className="text-xs font-bold text-emerald-300 flex items-center gap-1.5">
                       <Languages className="w-3.5 h-3.5 text-emerald-400" />
                       <span>Ключевая лексика и идиомы из песни</span>
@@ -1920,7 +1920,7 @@ export const MusicClipsView: React.FC<MusicClipsViewProps> = ({ onStartTyping, o
                     </p>
                   </div>
 
-                  <div className="space-y-2.5 flex-1 min-h-0 max-h-[720px] overflow-y-auto pr-1.5">
+                  <div className="space-y-2.5 flex-1 min-h-0 overflow-y-auto pr-1.5">
                     {songVocab.map(item => {
                       const isSaved = Boolean(savedVocabWords[item.word])
                       const isSaving = savingVocabWord === item.word
@@ -1984,7 +1984,7 @@ export const MusicClipsView: React.FC<MusicClipsViewProps> = ({ onStartTyping, o
 
               {/* TAB 3: SONG COMPREHENSION QUIZ (Complex Words + Figurative Quotes / Idioms) */}
               {activeTab === 'quiz' && (
-                <div className="space-y-3 animate-fade-in" data-testid="song-quiz-content">
+                <div className="space-y-3 flex-1 min-h-0 overflow-y-auto pr-1.5 animate-fade-in" data-testid="song-quiz-content">
                   {quizFinished ? (
                     <div
                       className="p-5 rounded-2xl bg-gradient-to-b from-purple-500/15 to-[#050810] border border-purple-400/30 text-center space-y-3"
@@ -2090,7 +2090,7 @@ export const MusicClipsView: React.FC<MusicClipsViewProps> = ({ onStartTyping, o
 
               {/* TAB 4: DEEP MEANING & CULTURAL CONTEXT */}
               {activeTab === 'ai-meaning' && (
-                <div className="space-y-3 animate-fade-in flex-1 min-h-0 max-h-[760px] overflow-y-auto pr-1.5" data-testid="ai-meaning-content">
+                <div className="space-y-3 animate-fade-in flex-1 min-h-0 overflow-y-auto pr-1.5" data-testid="ai-meaning-content">
                   <div className="p-4 rounded-2xl bg-gradient-to-r from-indigo-500/10 via-transparent to-sky-500/10 border border-white/[0.08] space-y-2">
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex items-center space-x-1.5 text-indigo-300 text-xs font-bold">
