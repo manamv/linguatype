@@ -622,4 +622,30 @@ describe('Criterion 8: Component Rendering and User Interactions', () => {
     expect(feedback).toHaveTextContent(/Почему «completed» не подходит/i)
     expect(feedback).toHaveTextContent(/Правильный вариант — «has completed»/i)
   })
+
+  it('MusicClipsView: supports Steve Lacy - The Feeling, Rhythm Typing mode, and Auto-Pause Dictation mode', async () => {
+    render(<MusicClipsView onStartTyping={vi.fn()} />)
+
+    // Verify Steve Lacy song tab appears
+    const steveTab = await screen.findByTestId('song-tab-steve-lacy-the-feeling')
+    expect(steveTab).toHaveTextContent(/The Feeling/i)
+    fireEvent.click(steveTab)
+
+    // Switch to Rhythm Typing mode
+    const rhythmBtn = await screen.findByTestId('music-mode-rhythm')
+    fireEvent.click(rhythmBtn)
+    expect(await screen.findByTestId('music-rhythm-panel')).toBeInTheDocument()
+
+    // Switch to Auto-Pause Dictation mode
+    const dictationBtn = screen.getByTestId('music-mode-dictation')
+    fireEvent.click(dictationBtn)
+    expect(await screen.findByTestId('music-dictation-panel')).toBeInTheDocument()
+
+    // Trigger typing phase immediately and verify hint toggle works
+    fireEvent.click(screen.getByTestId('dictation-force-type-btn'))
+    const hintBtn = screen.getByTestId('dictation-hint-btn')
+    expect(hintBtn).toHaveTextContent(/Подсказка/i)
+    fireEvent.click(hintBtn)
+    expect(hintBtn).toHaveTextContent(/Скрыть/i)
+  })
 })

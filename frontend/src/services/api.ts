@@ -333,6 +333,46 @@ const FALLBACK_MUSIC_LESSONS: MusicLesson[] = [
       { id: 'by-1', english: 'yesterday all my troubles seemed so far away now it looks as though they are here to stay', russian: 'вчера все невзгоды казались далекими теперь кажется будто они здесь навсегда', grammarTip: 'past simple seemed в контрасте с настоящим looks' },
       { id: 'by-2', english: 'suddenly i am not half the man i used to be there is a shadow hanging over me', russian: 'вдруг я больше не тот кем был раньше надо мной нависла тень', grammarTip: 'конструкция used to для прошлых состояний' }
     ]
+  },
+  {
+    id: 'steve-lacy-the-feeling',
+    title: 'The Feeling',
+    artist: 'Steve Lacy',
+    level: 'B2',
+    videoUrl: 'https://www.youtube.com/embed/ZNvgxCQbHf4',
+    thumbnailUrl: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=600&auto=format&fit=crop&q=80',
+    grammarFocus: 'Idioms, participle clauses, modals (could / would rather) and conditionals',
+    subtitles: [
+      makeSub(1, 23.82, 34.73, 'something is burning i smell fire', 'что то горит я чувствую запах огня'),
+      makeSub(2, 34.73, 45.84, 'the devil is working hard to keep me alone', 'дьявол усердно старается оставить меня одного'),
+      makeSub(3, 45.84, 52.63, 'i know we are down to the wire', 'я знаю мы на самом пределе'),
+      makeSub(4, 52.63, 57.19, 'oh i cannot be without you', 'о я не могу быть без тебя'),
+      makeSub(5, 57.19, 67.00, 'i often wonder where your head is so confused', 'я часто гадаю где твои мысли так запутался'),
+      makeSub(6, 67.00, 69.59, 'the heart takes what it wants', 'сердце берет то что хочет'),
+      makeSub(7, 69.59, 77.56, 'i am not scared to bleed you know our history', 'я не боюсь боли ты знаешь нашу историю'),
+      makeSub(8, 77.56, 85.86, 'after all there is one thing i do not know', 'в конце концов есть одна вещь которую я не знаю'),
+      makeSub(9, 85.86, 97.04, 'am i your baby am i your baby', 'я твой малыш я твой малыш'),
+      makeSub(10, 111.82, 117.28, 'staring at your pictures wishing i was with you', 'смотрю на твои фото желая быть с тобой'),
+      makeSub(11, 117.28, 120.30, 'i could let it go but i am not a quitter', 'я мог бы отпустить это но я не сдаюсь'),
+      makeSub(12, 120.30, 122.94, 'i cannot let you go i am in love with you', 'я не могу тебя отпустить я влюблен в тебя'),
+      makeSub(13, 122.94, 128.57, 'sending all the signals pay me some attention', 'посылаю все сигналы обрати на меня внимание'),
+      makeSub(14, 128.57, 131.26, 'kept it to myself because i did not want to be a burden', 'держал в себе потому что не хотел быть обузой'),
+      makeSub(15, 131.26, 136.48, 'this is not going to heal if we do not make a deal', 'это не заживет если мы не договоримся'),
+      makeSub(16, 142.37, 147.64, 'because i could spend my whole life waiting', 'потому что я мог бы провести всю жизнь в ожидании'),
+      makeSub(17, 147.64, 153.30, 'i would rather not so baby let us get on', 'я бы предпочел этого не делать так что давай двигаться дальше')
+    ],
+    grammarBreakdown: [
+      { ruleTitle: 'Idiom: Down to the Wire', lyricQuote: 'i know we are down to the wire', explanation: 'down to the wire — популярная английская идиома, означающая «до самого последнего момента / на пределе».', grammarTag: 'idioms' },
+      { ruleTitle: 'Participle Clauses (-ing)', lyricQuote: 'staring at your pictures wishing i was with you', explanation: 'Причастные обороты staring и wishing передают одновременные действия и переживания без лишних союзов.', grammarTag: 'participles' },
+      { ruleTitle: 'Would Rather (Preference)', lyricQuote: 'i would rather not so baby let us get on', explanation: 'Конструкция would rather (not) выражает личное предпочтение — «я бы предпочёл не делать этого».', grammarTag: 'modals' },
+      { ruleTitle: 'First Conditional', lyricQuote: 'this is not going to heal if we do not make a deal', explanation: 'Реальное условие будущего: be going to в главной части и Present Simple после if.', grammarTag: 'conditionals' }
+    ],
+    typingSentences: [
+      { id: 'sl-1', english: 'something is burning i smell fire the devil is working hard to keep me alone', russian: 'что-то горит я чувствую запах огня дьявол усердно старается оставить меня одного', grammarTip: 'present continuous is burning is working для текущих процессов' },
+      { id: 'sl-2', english: 'i know we are down to the wire oh i cannot be without you the heart takes what it wants', russian: 'я знаю мы на пределе о я не могу быть без тебя сердце берет то что хочет', grammarTip: 'идиома down to the wire и модальный глагол cannot' },
+      { id: 'sl-3', english: 'staring at your pictures wishing i was with you i could let it go but i am not a quitter', russian: 'смотрю на твои фото желая быть с тобой я мог бы отпустить это но я не сдаюсь', grammarTip: 'причастные обороты staring wishing и модальный could' },
+      { id: 'sl-4', english: 'this is not going to heal if we do not make a deal i would rather not so baby let us get on', russian: 'это не заживет если мы не договоримся я бы предпочел этого не делать так что давай двигаться дальше', grammarTip: 'first conditional и конструкция would rather not' }
+    ]
   }
 ]
 

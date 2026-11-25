@@ -13,7 +13,13 @@ import {
   RotateCcw,
   ArrowLeft,
   Crosshair,
-  Languages
+  Languages,
+  Zap,
+  Ear,
+  Eye,
+  EyeOff,
+  SkipForward,
+  CheckCircle2
 } from 'lucide-react'
 import type { MusicLesson, LessonData } from '../../types'
 import { api } from '../../services/api'
@@ -132,6 +138,27 @@ const AI_SONG_ANALYSES: Record<
       }
     ],
     emotionalTone: 'Элегический, светлая грусть, глубокая рефлексия.'
+  },
+  'steve-lacy-the-feeling': {
+    mainTheme:
+      'Уязвимость, неопределённость в отношениях и внутренний конфликт между страхом быть отвергнутым и желанием быть рядом с любимым человеком.',
+    culturalContext:
+      'Современный инди-R&B / нео-соул трек Стива Лейси с богатой живой разговорной лексикой, идиомами и искренней интонацией диалога.',
+    metaphors: [
+      {
+        quote: 'something is burning i smell fire',
+        meaning: 'Предчувствие надвигающегося эмоционального накала или кризиса в отношениях.'
+      },
+      {
+        quote: 'we are down to the wire',
+        meaning: '«На самом пределе / до последней секунды» — ситуация подошла к решающему моменту.'
+      },
+      {
+        quote: 'i am not scared to bleed',
+        meaning: 'Готовность открыться и рискнуть душевной болью ради настоящих чувств.'
+      }
+    ],
+    emotionalTone: 'Интимный, чувственный, слегка тревожный, но искренний.'
   }
 }
 
@@ -162,6 +189,16 @@ export const MusicClipsView: React.FC<MusicClipsViewProps> = ({ onStartTyping, o
   const [syncFlashMsg, setSyncFlashMsg] = useState<string | null>(null)
   const [translateOnClick, setTranslateOnClick] = useState<boolean>(false)
 
+  // Interactive Musical Typing Modes: 'karaoke' | 'rhythm' (type on beat) | 'dictation' (listen -> auto-pause -> type by ear -> auto-resume)
+  const [musicMode, setMusicMode] = useState<'karaoke' | 'rhythm' | 'dictation'>('karaoke')
+  const [typedLine, setTypedLine] = useState<string>('')
+  const [lineCleared, setLineCleared] = useState<boolean>(false)
+  const [linesClearedCount, setLinesClearedCount] = useState<number>(0)
+  const [rhythmCombo, setRhythmCombo] = useState<number>(0)
+  const [musicErrors, setMusicErrors] = useState<number>(0)
+  const [dictationPhase, setDictationPhase] = useState<'LISTENING' | 'TYPING' | 'DONE'>('LISTENING')
+  const [dictationShowHint, setDictationShowHint] = useState<boolean>(false)
+
   // Shared Word Translation Popover (Idea #4)
   const { selectedWord, handleTextSelection, selectWord, clearSelectedWord } = useWordSelection()
 
@@ -185,11 +222,18 @@ export const MusicClipsView: React.FC<MusicClipsViewProps> = ({ onStartTyping, o
   const activeWordIdxRef = useRef<number>(-1)
   const isInIntroRef = useRef<boolean>(false)
   const timingOffsetRef = useRef<number>(0)
+  const musicModeRef = useRef<'karaoke' | 'rhythm' | 'dictation'>('karaoke')
+  const dictationPhaseRef = useRef<'LISTENING' | 'TYPING' | 'DONE'>('LISTENING')
+  const dictationPausedLineIdRef = useRef<number>(-1)
+  const typedLineRef = useRef<string>('')
 
   timingOffsetRef.current = timingOffset
   activeSubIdRef.current = activeSubtitleId
   activeWordIdxRef.current = activeWordIdx
   isInIntroRef.current = isInIntro
+  musicModeRef.current = musicMode
+  dictationPhaseRef.current = dictationPhase
+  typedLineRef.current = typedLine
 
   // Passive YouTube postMessage listener (zero setState on time ticks -> zero lag, 100% reliable fallback clock!)
   useEffect(() => {
@@ -263,6 +307,16 @@ export const MusicClipsView: React.FC<MusicClipsViewProps> = ({ onStartTyping, o
         setIsKaraokePlaying(false)
         setActiveWordIdx(-1)
         setIsInIntro(false)
+        setTypedLine('')
+        typedLineRef.current = ''
+        setLineCleared(false)
+        setLinesClearedCount(0)
+        setRhythmCombo(0)
+        setMusicErrors(0)
+        setDictationPhase('LISTENING')
+        dictationPhaseRef.current = 'LISTENING'
+        dictationPausedLineIdRef.current = -1
+        setDictationShowHint(false)
         if (timeDisplayRef.current) {
           timeDisplayRef.current.textContent = '0.0 сек'
         }
@@ -456,10 +510,36 @@ export const MusicClipsView: React.FC<MusicClipsViewProps> = ({ onStartTyping, o
         introCountdownRef.current.textContent = `${Math.max(0, firstStart - effTime).toFixed(1)}с`
       }
 
+      // Dictation Mode Auto-Pause: pause right at the end of the active phrase so user types by ear
+      if (musicModeRef.current === 'dictation' && dictationPhaseRef.current === 'LISTENING') {
+        const currentTargetSub = currentSong.subtitles.find(s => s.id === activeSubIdRef.current)
+        if (
+          currentTargetSub &&
+          effTime >= currentTargetSub.endSeconds - 0.08 &&
+          dictationPausedLineIdRef.current !== currentTargetSub.id
+        ) {
+          dictationPausedLineIdRef.current = currentTargetSub.id
+          try {
+            ytPlayerRef.current?.pauseVideo?.()
+          } catch {
+            // ignore
+          }
+          setIsKaraokePlaying(false)
+          dictationPhaseRef.current = 'TYPING'
+          setDictationPhase('TYPING')
+          setTypedLine('')
+          typedLineRef.current = ''
+          setLineCleared(false)
+          soundService.playKeyClick(false)
+          if (spotlightProgressRef.current) spotlightProgressRef.current.style.width = '100%'
+          return
+        }
+      }
+
       const match = currentSong.subtitles.find(s => effTime >= s.startSeconds && effTime <= s.endSeconds)
 
       if (match) {
-        if (match.id !== activeSubIdRef.current) {
+        if (match.id !== activeSubIdRef.current && musicModeRef.current !== 'dictation') {
           activeSubIdRef.current = match.id
           setActiveSubtitleId(match.id)
         }
@@ -630,6 +710,143 @@ export const MusicClipsView: React.FC<MusicClipsViewProps> = ({ onStartTyping, o
     onStartTyping(lessonData)
   }
 
+  // Reset typed input whenever the active lyric line changes in Rhythm mode
+  useEffect(() => {
+    if (musicMode === 'rhythm') {
+      setTypedLine('')
+      typedLineRef.current = ''
+      setLineCleared(false)
+    }
+  }, [activeSubtitleId, musicMode])
+
+  const handleSelectMusicMode = (nextMode: 'karaoke' | 'rhythm' | 'dictation') => {
+    setMusicMode(nextMode)
+    musicModeRef.current = nextMode
+    setTypedLine('')
+    typedLineRef.current = ''
+    setLineCleared(false)
+    setDictationShowHint(false)
+    dictationPausedLineIdRef.current = -1
+
+    if (!currentSong || currentSong.subtitles.length === 0) return
+
+    if (nextMode === 'dictation') {
+      setDictationPhase('LISTENING')
+      dictationPhaseRef.current = 'LISTENING'
+      const curSub = currentSong.subtitles.find(s => s.id === activeSubIdRef.current) || currentSong.subtitles[0]
+      if (curSub) {
+        executeSeekAndPlay(Math.max(0, curSub.startSeconds - timingOffsetRef.current), curSub.id)
+      }
+    } else if (nextMode === 'rhythm' && !isKaraokePlaying) {
+      const curSub = currentSong.subtitles.find(s => s.id === activeSubIdRef.current) || currentSong.subtitles[0]
+      if (curSub) {
+        executeSeekAndPlay(Math.max(0, curSub.startSeconds - timingOffsetRef.current), curSub.id)
+      }
+    }
+  }
+
+  const handleReplayDictationLine = useCallback(() => {
+    if (!currentSong) return
+    const curSub = currentSong.subtitles.find(s => s.id === activeSubIdRef.current) || currentSong.subtitles[0]
+    if (!curSub) return
+    dictationPausedLineIdRef.current = -1
+    dictationPhaseRef.current = 'LISTENING'
+    setDictationPhase('LISTENING')
+    executeSeekAndPlay(Math.max(0, curSub.startSeconds - timingOffsetRef.current), curSub.id)
+  }, [currentSong, executeSeekAndPlay])
+
+  const handleAdvanceDictationLine = useCallback(() => {
+    if (!currentSong) return
+    const idx = currentSong.subtitles.findIndex(s => s.id === activeSubIdRef.current)
+    const nextSub = idx >= 0 ? currentSong.subtitles[idx + 1] : undefined
+    setTypedLine('')
+    typedLineRef.current = ''
+    setLineCleared(false)
+    setDictationShowHint(false)
+    dictationPausedLineIdRef.current = -1
+
+    if (nextSub) {
+      dictationPhaseRef.current = 'LISTENING'
+      setDictationPhase('LISTENING')
+      executeSeekAndPlay(Math.max(0, nextSub.startSeconds - timingOffsetRef.current), nextSub.id)
+    } else {
+      dictationPhaseRef.current = 'DONE'
+      setDictationPhase('DONE')
+      try {
+        ytPlayerRef.current?.pauseVideo?.()
+      } catch {
+        // ignore
+      }
+      setIsKaraokePlaying(false)
+      soundService.playCompletionChime()
+    }
+  }, [currentSong, executeSeekAndPlay])
+
+  // Keyboard listener for Rhythm Typing (on beat) and Clip Dictation (after auto-pause)
+  useEffect(() => {
+    if (!currentSong) return
+    const isTypingActive =
+      musicMode === 'rhythm' || (musicMode === 'dictation' && dictationPhase === 'TYPING')
+    if (!isTypingActive) return
+
+    const activeSub = currentSong.subtitles.find(s => s.id === activeSubtitleId) || currentSong.subtitles[0]
+    if (!activeSub) return
+    const expectedLine = activeSub.textEn.toLowerCase().trim()
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement | null)?.tagName
+      if (tag === 'INPUT' || tag === 'TEXTAREA') return
+      if (e.key === 'Shift' || e.key === 'Control' || e.key === 'Alt' || e.key === 'Meta' || e.key === 'Tab') return
+
+      if (e.key === 'Backspace') {
+        e.preventDefault()
+        const next = e.ctrlKey
+          ? typedLineRef.current.replace(/\s*\S*$/, '')
+          : typedLineRef.current.slice(0, -1)
+        typedLineRef.current = next
+        setTypedLine(next)
+        return
+      }
+
+      if (e.key.length === 1 && !lineCleared) {
+        e.preventDefault()
+        const cur = typedLineRef.current
+        if (cur.length >= expectedLine.length) return
+
+        const typedKey = e.key.toLowerCase()
+        const isCorrect = typedKey === expectedLine[cur.length]
+
+        if (isCorrect) {
+          soundService.playKeyClick(false)
+        } else {
+          soundService.playKeyClick(true)
+          setMusicErrors(err => err + 1)
+          setRhythmCombo(0)
+        }
+
+        const next = cur + typedKey
+        typedLineRef.current = next
+        setTypedLine(next)
+
+        if (next === expectedLine) {
+          setLineCleared(true)
+          setLinesClearedCount(c => c + 1)
+          setRhythmCombo(c => c + 1)
+          soundService.playQuizCorrect()
+
+          if (musicModeRef.current === 'dictation') {
+            setTimeout(() => {
+              handleAdvanceDictationLine()
+            }, 650)
+          }
+        }
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [currentSong, musicMode, dictationPhase, activeSubtitleId, lineCleared, handleAdvanceDictationLine])
+
   const aiAnalysis = AI_SONG_ANALYSES[selectedSongId] || AI_SONG_ANALYSES['queen-champions']
 
   return (
@@ -639,7 +856,7 @@ export const MusicClipsView: React.FC<MusicClipsViewProps> = ({ onStartTyping, o
       onMouseUp={handleTextSelection}
     >
       {/* Header Banner */}
-      <div className="flex flex-wrap items-center justify-between gap-4 p-5 rounded-3xl bg-[#090d16]/85 backdrop-blur-2xl border border-white/[0.08] shadow-2xl shadow-black/80">
+      <div className="flex flex-wrap items-center justify-between gap-4 p-5 rounded-3xl bg-[#090d16]/95 border border-white/[0.08] shadow-2xl shadow-black/80">
         <div className="flex items-center space-x-3.5">
           {onBack && (
             <button
@@ -781,50 +998,262 @@ export const MusicClipsView: React.FC<MusicClipsViewProps> = ({ onStartTyping, o
                 </div>
               </div>
 
-              {/* Live Karaoke Teleprompter synced directly to YouTube Clip Tempo */}
+              {/* 3-Way Interactive Mode Switcher: Karaoke | Rhythm Typing | Auto-Pause Dictation */}
+              <div className="px-3.5 py-2.5 bg-[#070b14] border-t border-white/[0.06] flex flex-wrap items-center justify-between gap-2">
+                <div className="flex items-center gap-1 p-1 rounded-xl bg-white/[0.03] border border-white/[0.07] text-[11px] font-mono">
+                  <button
+                    onClick={() => handleSelectMusicMode('karaoke')}
+                    className={`px-2.5 py-1.5 rounded-lg transition flex items-center gap-1.5 cursor-pointer ${
+                      musicMode === 'karaoke'
+                        ? 'bg-sky-500/20 text-sky-300 border border-sky-400/40 font-bold'
+                        : 'text-slate-400 hover:text-white'
+                    }`}
+                    data-testid="music-mode-karaoke"
+                  >
+                    <Headphones className="w-3.5 h-3.5" />
+                    <span>Караоке</span>
+                  </button>
+                  <button
+                    onClick={() => handleSelectMusicMode('rhythm')}
+                    className={`px-2.5 py-1.5 rounded-lg transition flex items-center gap-1.5 cursor-pointer ${
+                      musicMode === 'rhythm'
+                        ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-400/40 font-bold'
+                        : 'text-slate-400 hover:text-white'
+                    }`}
+                    data-testid="music-mode-rhythm"
+                    title="Печатайте текст прямо по темпу играющей песни"
+                  >
+                    <Zap className="w-3.5 h-3.5" />
+                    <span>Ритм-печать</span>
+                  </button>
+                  <button
+                    onClick={() => handleSelectMusicMode('dictation')}
+                    className={`px-2.5 py-1.5 rounded-lg transition flex items-center gap-1.5 cursor-pointer ${
+                      musicMode === 'dictation'
+                        ? 'bg-amber-500/20 text-amber-300 border border-amber-400/40 font-bold'
+                        : 'text-slate-400 hover:text-white'
+                    }`}
+                    data-testid="music-mode-dictation"
+                    title="Клип поёт фразу → авто-пауза → вы печатаете на слух → клип продолжается"
+                  >
+                    <Ear className="w-3.5 h-3.5" />
+                    <span>Диктант (авто-пауза)</span>
+                  </button>
+                </div>
+
+                {musicMode !== 'karaoke' && (
+                  <div className="flex items-center gap-2 text-[11px] font-mono">
+                    <span className="px-2 py-0.5 rounded-lg bg-emerald-500/15 text-emerald-300 border border-emerald-400/30">
+                      ✓ {linesClearedCount}
+                    </span>
+                    {rhythmCombo >= 2 && (
+                      <span className="px-2 py-0.5 rounded-lg bg-amber-500/15 text-amber-300 border border-amber-400/30">
+                        🔥 {rhythmCombo}x
+                      </span>
+                    )}
+                    <span className="text-rose-400">Ошибки: {musicErrors}</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Interactive Deck below Video: Karaoke Teleprompter OR Rhythm Typing OR Auto-Pause Dictation */}
               {(() => {
                 const activeIdx = currentSong.subtitles.findIndex(s => s.id === activeSubtitleId)
                 const activeSub = currentSong.subtitles[activeIdx] || currentSong.subtitles[0]
                 const nextSub = activeIdx >= 0 ? currentSong.subtitles[activeIdx + 1] : currentSong.subtitles[1]
                 if (!activeSub) return null
-                const spotlightWords = activeSub.textEn.split(' ')
+
+                // MODE 1: STANDARD KARAOKE TELEPROMPTER
+                if (musicMode === 'karaoke') {
+                  const spotlightWords = activeSub.textEn.split(' ')
+                  return (
+                    <div className="relative px-5 py-4 bg-gradient-to-b from-[#070b14] to-[#050810] border-t border-white/[0.06] space-y-2">
+                      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 font-mono text-base sm:text-lg leading-snug select-text">
+                        {spotlightWords.map((w, idx) => {
+                          const isCur = isKaraokePlaying && !isInIntro && idx === activeWordIdx
+                          const isPast = isKaraokePlaying && !isInIntro && activeWordIdx > -1 && idx < activeWordIdx
+                          return (
+                            <span
+                              key={idx}
+                              onClick={() => selectWord(w)}
+                              className={`cursor-pointer ${
+                                isCur
+                                  ? 'text-white font-black bg-sky-500/30 px-2 py-0.5 rounded-lg border border-sky-400/60 shadow-[0_0_16px_rgba(56,189,248,0.45)]'
+                                  : isPast
+                                    ? 'text-sky-300 font-bold'
+                                    : 'text-slate-400 hover:text-sky-200 font-medium'
+                              }`}
+                              title="Нажмите на слово для перевода"
+                            >
+                              {w}
+                            </span>
+                          )
+                        })}
+                      </div>
+                      <div className="flex items-center justify-between gap-3 text-xs">
+                        <span className="text-slate-400">{activeSub.textRu}</span>
+                        {nextSub && (
+                          <span className="text-[11px] font-mono text-slate-600 truncate max-w-[45%] hidden sm:inline">
+                            Далее: {nextSub.textEn}
+                          </span>
+                        )}
+                      </div>
+                      <div className="w-full h-1 bg-white/[0.05] rounded-full overflow-hidden">
+                        <div
+                          ref={spotlightProgressRef}
+                          className="h-full bg-gradient-to-r from-sky-400 via-cyan-300 to-indigo-500 rounded-full"
+                          style={{ width: '0%' }}
+                        />
+                      </div>
+                    </div>
+                  )
+                }
+
+                // MODE 2 & MODE 3: RHYTHM TYPING OR AUTO-PAUSE CLIP DICTATION
+                const expectedLine = activeSub.textEn.toLowerCase().trim()
+                const isDictation = musicMode === 'dictation'
+                const shouldMask = isDictation && dictationPhase === 'TYPING' && !dictationShowHint && !lineCleared
+
                 return (
-                  <div className="relative px-5 py-4 bg-gradient-to-b from-[#070b14] to-[#050810] border-t border-white/[0.06] space-y-2">
-                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1 font-mono text-base sm:text-lg leading-snug select-text">
-                      {spotlightWords.map((w, idx) => {
-                        const isCur = isKaraokePlaying && !isInIntro && idx === activeWordIdx
-                        const isPast = isKaraokePlaying && !isInIntro && activeWordIdx > -1 && idx < activeWordIdx
-                        return (
-                          <span
-                            key={idx}
-                            onClick={() => selectWord(w)}
-                            className={`cursor-pointer ${
-                              isCur
-                                ? 'text-white font-black bg-sky-500/30 px-2 py-0.5 rounded-lg border border-sky-400/60 shadow-[0_0_16px_rgba(56,189,248,0.45)]'
-                                : isPast
-                                  ? 'text-sky-300 font-bold'
-                                  : 'text-slate-400 hover:text-sky-200 font-medium'
-                            }`}
-                            title="Нажмите на слово для перевода"
-                          >
-                            {w}
+                  <div
+                    className="relative px-5 py-4 bg-gradient-to-b from-[#070b14] to-[#050810] border-t border-white/[0.06] space-y-3"
+                    data-testid={isDictation ? 'music-dictation-panel' : 'music-rhythm-panel'}
+                  >
+                    {/* Status & Controls Bar */}
+                    <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
+                      {isDictation ? (
+                        dictationPhase === 'DONE' ? (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/40 font-bold">
+                            <CheckCircle2 className="w-3.5 h-3.5" />
+                            <span>Диктант по песне завершён!</span>
+                          </span>
+                        ) : dictationPhase === 'LISTENING' ? (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-sky-500/15 text-sky-300 border border-sky-400/30 font-mono">
+                            <Ear className="w-3.5 h-3.5 animate-pulse" />
+                            <span>Слушайте строку {activeIdx + 1}/{currentSong.subtitles.length} — авто-пауза в конце фразы...</span>
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-400/40 font-bold">
+                            <span>⏸ Пауза! Печатайте услышанную строку с клавиатуры</span>
                           </span>
                         )
-                      })}
+                      ) : (
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-400/30 font-mono">
+                          <Zap className="w-3.5 h-3.5" />
+                          <span>{lineCleared ? '✓ В темпе! Ждём следующую строку...' : 'Печатайте прямо в такт песни с клавиатуры'}</span>
+                        </span>
+                      )}
+
+                      {isDictation && dictationPhase !== 'DONE' && (
+                        <div className="flex items-center gap-1.5 font-mono text-[11px]">
+                          <button
+                            onClick={handleReplayDictationLine}
+                            className="px-2.5 py-1 rounded-lg bg-white/[0.05] hover:bg-sky-500/20 text-sky-300 border border-white/[0.08] transition cursor-pointer flex items-center gap-1"
+                            data-testid="dictation-replay-btn"
+                          >
+                            <RotateCcw className="w-3 h-3" />
+                            <span>Переслушать</span>
+                          </button>
+                          <button
+                            onClick={() => setDictationShowHint(h => !h)}
+                            className="px-2.5 py-1 rounded-lg bg-white/[0.05] hover:bg-amber-500/20 text-amber-300 border border-white/[0.08] transition cursor-pointer flex items-center gap-1"
+                            data-testid="dictation-hint-btn"
+                          >
+                            {dictationShowHint ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+                            <span>{dictationShowHint ? 'Скрыть' : 'Подсказка'}</span>
+                          </button>
+                          {dictationPhase === 'LISTENING' && (
+                            <button
+                              onClick={() => {
+                                dictationPausedLineIdRef.current = activeSub.id
+                                try { ytPlayerRef.current?.pauseVideo?.() } catch { /* ignore */ }
+                                setIsKaraokePlaying(false)
+                                dictationPhaseRef.current = 'TYPING'
+                                setDictationPhase('TYPING')
+                              }}
+                              className="px-2.5 py-1 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-400/30 transition cursor-pointer"
+                              data-testid="dictation-force-type-btn"
+                            >
+                              Печатать сейчас
+                            </button>
+                          )}
+                          <button
+                            onClick={handleAdvanceDictationLine}
+                            className="px-2.5 py-1 rounded-lg bg-white/[0.05] hover:bg-white/[0.1] text-slate-300 border border-white/[0.08] transition cursor-pointer flex items-center gap-1"
+                            data-testid="dictation-skip-btn"
+                          >
+                            <span>Дальше</span>
+                            <SkipForward className="w-3 h-3" />
+                          </button>
+                        </div>
+                      )}
                     </div>
+
+                    {/* Live Character-by-Character Typing Line */}
+                    <div
+                      className="font-mono text-lg sm:text-xl leading-relaxed tracking-wide p-3.5 rounded-2xl bg-[#090d16] border border-white/[0.08] min-h-[3.5rem] whitespace-pre-wrap break-words"
+                      data-testid="music-typing-line"
+                    >
+                      {isDictation && dictationPhase === 'LISTENING' ? (
+                        <span className="text-slate-500 italic text-sm">
+                          🎧 Внимательно слушайте строку... Как только она закончится, клип сам встанет на паузу.
+                        </span>
+                      ) : (
+                        expectedLine.split('').map((ch, idx) => {
+                          let cls = 'text-slate-500'
+                          let display = ch
+                          const isCurrent = idx === typedLine.length && !lineCleared
+
+                          if (idx < typedLine.length) {
+                            if (typedLine[idx] === ch) {
+                              cls = 'text-emerald-400 font-semibold'
+                            } else {
+                              cls = 'text-rose-400 bg-rose-500/30 underline decoration-rose-500 font-semibold'
+                              display = ch === ' ' ? '␣' : ch
+                            }
+                          } else if (shouldMask) {
+                            display = ch === ' ' ? ' ' : '•'
+                            cls = isCurrent ? 'text-amber-300' : 'text-slate-600'
+                          } else if (isCurrent) {
+                            cls = 'text-white'
+                          }
+
+                          return (
+                            <span key={idx} className={`relative ${ch === ' ' ? 'inline' : 'inline-block'} ${cls}`}>
+                              {isCurrent && (
+                                <span className="absolute -left-[1px] top-0.5 bottom-0.5 w-[2px] bg-sky-400 animate-pulse pointer-events-none" />
+                              )}
+                              {display}
+                            </span>
+                          )
+                        })
+                      )}
+                    </div>
+
+                    {/* Russian Translation Hint & Next Line */}
                     <div className="flex items-center justify-between gap-3 text-xs">
-                      <span className="text-slate-400">{activeSub.textRu}</span>
-                      {nextSub && (
-                        <span className="text-[11px] font-mono text-slate-600 truncate max-w-[45%] hidden sm:inline">
+                      <span className="text-slate-400">
+                        {isDictation ? `Смысл фразы: «${activeSub.textRu}»` : activeSub.textRu}
+                      </span>
+                      {!isDictation && nextSub && (
+                        <span className="text-[11px] font-mono text-slate-500 truncate max-w-[45%] hidden sm:inline">
                           Далее: {nextSub.textEn}
                         </span>
                       )}
                     </div>
-                    <div className="w-full h-1 bg-white/[0.05] rounded-full overflow-hidden">
+
+                    {/* Tempo Progress Bar */}
+                    <div className="w-full h-1.5 bg-white/[0.06] rounded-full overflow-hidden">
                       <div
                         ref={spotlightProgressRef}
-                        className="h-full bg-gradient-to-r from-sky-400 via-cyan-300 to-indigo-500 rounded-full"
-                        style={{ width: '0%' }}
+                        className={`h-full rounded-full ${
+                          lineCleared
+                            ? 'bg-emerald-400'
+                            : isDictation
+                              ? 'bg-gradient-to-r from-amber-400 to-sky-400'
+                              : 'bg-gradient-to-r from-emerald-400 via-sky-400 to-indigo-500'
+                        }`}
+                        style={{ width: lineCleared ? '100%' : '0%' }}
                       />
                     </div>
                   </div>
