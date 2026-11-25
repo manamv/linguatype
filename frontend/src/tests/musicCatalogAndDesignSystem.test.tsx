@@ -119,9 +119,12 @@ describe('Design System (shadcn/ui) & Scalable Music Catalog Tests', () => {
     const aiContent = await screen.findByTestId('ai-meaning-content')
     expect(aiContent).toHaveTextContent(/Отель Калифорния/i)
 
-    // Switch to Kendrick Lamar - Prayer
+    // Switch to Kendrick Lamar - Prayer and verify historical references (Michael Jackson & MLK)
     fireEvent.click(screen.getByTestId('song-tab-kendrick-prayer'))
     expect(await screen.findByTestId('ai-meaning-content')).toHaveTextContent(/разделении искусства и личности/i)
+    const refsSection = await screen.findByTestId('ai-references-section')
+    expect(refsSection).toHaveTextContent(/Майкл Джексон/i)
+    expect(refsSection).toHaveTextContent(/Мартин Лютер Кинг/i)
   })
 
   it('MusicClipsView: Rhythm Typing mode tracks live keystrokes and counts mistakes', async () => {
@@ -223,6 +226,7 @@ describe('Design System (shadcn/ui) & Scalable Music Catalog Tests', () => {
     expect(vocabContent).toHaveTextContent(/coming up roses/i)
     expect(vocabContent).toHaveTextContent(/devoid of/i)
     expect(vocabContent).toHaveTextContent(/Контекст:/i)
+    expect(vocabContent).toHaveTextContent(/Но я не лишён жажды жизни/i)
 
     // Save word to personal vocabulary
     const saveBtn = screen.getByTestId('save-song-vocab-devoid-of')

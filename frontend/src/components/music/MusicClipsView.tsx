@@ -37,6 +37,7 @@ import { WordPopover } from '../typing/WordPopover'
 import { useWordSelection } from '../../hooks/useWordSelection'
 import { normalizeEnglishWord } from '../../utils/dictionary'
 import { SONG_VOCABULARY, type SongVocabItem } from '../../data/songVocabulary'
+import { AI_SONG_ANALYSES } from '../../data/songAiAnalysis'
 
 interface YTPlayerInstance {
   playVideo?: () => void
@@ -78,308 +79,6 @@ interface MusicClipsViewProps {
 function extractYouTubeId(url: string): string {
   const match = url.match(/embed\/([a-zA-Z0-9_-]+)/)
   return match ? match[1] : '04854XqcfCY'
-}
-
-// Deep AI Meaning Analysis for famous tracks
-const AI_SONG_ANALYSES: Record<
-  string,
-  {
-    mainTheme: string
-    culturalContext: string
-    metaphors: Array<{ quote: string; meaning: string }>
-    emotionalTone: string
-  }
-> = {
-  'queen-champions': {
-    mainTheme:
-      'Гимн преодоления, упорства и триумфа вопреки критике и поражениям. Фредди Меркьюри написал эту песню как манифест внутренней победы, объединяющий слушателей.',
-    culturalContext:
-      'Выпущена в 1977 году на альбоме «News of the World». Вошла в историю как главный стадионный гимн мира, где фраза «we are» намеренно стирает грань между артистом и залом.',
-    metaphors: [
-      {
-        quote: 'i have paid my dues time after time',
-        meaning: '«Заплатил по счетам» — идиома: прошёл через все трудности и заслужил право на успех.'
-      },
-      {
-        quote: 'sand kicked in my face',
-        meaning: 'Метафора публичного унижения, насмешек и недооценки со стороны окружающих.'
-      },
-      {
-        quote: 'no bed of roses',
-        meaning: '«Не ложе из роз» — признание того, что путь к вершине никогда не был лёгким.'
-      }
-    ],
-    emotionalTone: 'Триумфальный, воодушевляющий, величественный.'
-  },
-  'coldplay-scientist': {
-    mainTheme:
-      'Конфликт между рациональной наукой (логикой) и иррациональными человеческими чувствами. Герой осознаёт, что любовь нельзя просчитать формулами.',
-    culturalContext:
-      'Написана Крисом Мартином в Ливерпуле после прослушивания Джорджа Харрисона. Знаменитый клип снят в обратном времени (reverse motion), символизируя желание «вернуться к началу».',
-    metaphors: [
-      {
-        quote: 'questions of science... do not speak as loud as my heart',
-        meaning: 'Рациональный анализ бессилен перед эмоциональной болью и искренним раскаянием.'
-      },
-      {
-        quote: 'running in circles, coming up tails',
-        meaning: 'Бег по кругу без выхода и «выпала решка» — ощущение проигрыша в игре с судьбой.'
-      },
-      {
-        quote: 'take me back to the start',
-        meaning: 'Тоска по моменту до совершения роковой ошибки.'
-      }
-    ],
-    emotionalTone: 'Меланхоличный, искренний, ностальгический.'
-  },
-  'beatles-yesterday': {
-    mainTheme:
-      'Внезапная утрата гармонии и шок от того, как быстро беззаботное «вчера» сменяется тревогой настоящего.',
-    culturalContext:
-      'Пол Маккартни услышал мелодию во сне в 1965 году. Одна из самых записываемых песен в истории мировой музыки (более 2200 кавер-версий).',
-    metaphors: [
-      {
-        quote: 'i am not half the man i used to be',
-        meaning: 'Гипербола эмоционального опустошения после разрыва.'
-      },
-      {
-        quote: 'there is a shadow hanging over me',
-        meaning: 'Нависшая тень — классический образ тревоги, вины и экзистенциального одиночества.'
-      }
-    ],
-    emotionalTone: 'Элегический, светлая грусть, глубокая рефлексия.'
-  },
-  'steve-lacy-the-feeling': {
-    mainTheme:
-      'Уязвимость, неопределённость в отношениях и внутренний конфликт между страхом быть отвергнутым и желанием быть рядом с любимым человеком.',
-    culturalContext:
-      'Современный инди-R&B / нео-соул трек Стива Лейси с богатой живой разговорной лексикой, идиомами и искренней интонацией диалога.',
-    metaphors: [
-      {
-        quote: 'something is burning i smell fire',
-        meaning: 'Предчувствие надвигающегося эмоционального накала или кризиса в отношениях.'
-      },
-      {
-        quote: 'we are down to the wire',
-        meaning: '«На самом пределе / до последней секунды» — ситуация подошла к решающему моменту.'
-      },
-      {
-        quote: 'i am not scared to bleed',
-        meaning: 'Готовность открыться и рискнуть душевной болью ради настоящих чувств.'
-      }
-    ],
-    emotionalTone: 'Интимный, чувственный, слегка тревожный, но искренний.'
-  },
-  'wham-last-christmas': {
-    mainTheme:
-      'Светлая зимняя грусть о безответной любви и попытке сохранить сердце от повторной боли, когда встречаешь былую любовь год спустя в праздничной компании.',
-    culturalContext:
-      'Написана и спродюсирована Джорджем Майклом в 1984 году (Wham!). Один из самых узнаваемых рождественских хитов в истории поп-музыки, знаменитый клип снят на горнолыжном курорте Саас-Фе в Швейцарии.',
-    metaphors: [
-      {
-        quote: 'once bitten and twice shy',
-        meaning: 'Классическая английская пословица: получив горький опыт однажды, человек становится вдвойне осторожным.'
-      },
-      {
-        quote: 'your soul of ice',
-        meaning: '«Ледяная душа» — контраст между уютным зимним праздником и эмоциональной холодностью возлюбленной.'
-      },
-      {
-        quote: 'a shoulder to cry on',
-        meaning: '«Плечо, в которое можно поплакаться» — осознание героя, что его использовали лишь как временную поддержку.'
-      }
-    ],
-    emotionalTone: 'Ностальгический, тёплый, зимне-меланхоличный.'
-  },
-  'harry-styles-coming-up-roses': {
-    mainTheme:
-      'Тонкий баланс между надеждой на то, что всё наконец наладится («coming up roses»), и страхом, что двое любящих людей всё же смотрят в разные стороны.',
-    culturalContext:
-      'Лиричный трек Гарри Стайлза, наполненный живыми британскими идиомами (coming up roses, stay the course, talk your ear off) и интимной исповедальной атмосферой.',
-    metaphors: [
-      {
-        quote: 'everything seems to be coming up roses',
-        meaning: '«Всё расцветает розами» — идиома благополучия, за которой скрывается тревога героя.'
-      },
-      {
-        quote: 'if we stay the course',
-        meaning: 'Морская метафора верности выбранному курсу вопреки сомнениям.'
-      },
-      {
-        quote: 'fumble my words and fall flat on my face',
-        meaning: 'Искреннее признание в уязвимости: герой путается в словах, пытаясь быть честным.'
-      }
-    ],
-    emotionalTone: 'Тёплый, романтичный, слегка тревожный и откровенный.'
-  },
-  'frank-ocean-ivy': {
-    mainTheme:
-      'Ностальгия по первой, ещё незрелой любви и болезненное взросление, когда чувства в глубине души остаются светлыми, но вернуться в прошлое уже невозможно.',
-    culturalContext:
-      'Второй трек легендарного альбома «Blonde» (2016). Название «Ivy» (плющ) символизирует память, которая оплетает прошлое и не отпускает даже спустя годы.',
-    metaphors: [
-      {
-        quote: 'if i could see through walls i could see you are faking',
-        meaning: 'Желание заглянуть за эмоциональную защиту партнёра и понять истинные чувства.'
-      },
-      {
-        quote: 'safe in my rental like an armored truck back then',
-        meaning: 'Юношеская иллюзия полной неуязвимости рядом с любимым человеком.'
-      },
-      {
-        quote: 'we will never be those kids again',
-        meaning: 'Точка невозврата: принятие того, что прежняя беззаботность осталась в прошлом.'
-      }
-    ],
-    emotionalTone: 'Мечтательный, горько-сладкий, глубоко ностальгический.'
-  },
-  'sting-shape-of-my-heart': {
-    mainTheme:
-      'История игрока в покер, который раздаёт карты не ради денег и славы, а пытаясь разгадать скрытую логику судьбы — но так и не постигает природу любви.',
-    culturalContext:
-      'Выпущена в 1993 году на альбоме «Ten Summoner’s Tales», стала бессмертной классикой благодаря фильму Люка Бессона «Леон» (1994) и гитарному риффу Доминика Миллера.',
-    metaphors: [
-      {
-        quote: 'the sacred geometry of chance',
-        meaning: 'Попытка рационального ума найти божественный порядок в хаосе случайностей.'
-      },
-      {
-        quote: 'spades are the swords... clubs are weapons... diamonds mean money',
-        meaning: 'Три карточные масти символизируют власть, войну и богатство — всё, кроме червей (любви).'
-      },
-      {
-        quote: 'that is not the shape of my heart',
-        meaning: 'Герой понимает правила игры, но его сердце устроено сложнее любых карточных формул.'
-      }
-    ],
-    emotionalTone: 'Философский, сдержанный, созерцательно-грустный.'
-  },
-  'eagles-hotel-california': {
-    mainTheme:
-      'Аллегория на соблазн, роскошь и потерю внутренней свободы: «Отель Калифорния» — метафора гедонизма и зависимости, из которой легко войти, но невозможно уйти.',
-    culturalContext:
-      'Записана группой Eagles в 1976 году и удостоена «Грэмми» за запись года. Одна из самых известных рок-композиций XX века с культовым дуэтным гитарным соло.',
-    metaphors: [
-      {
-        quote: 'this could be heaven or this could be hell',
-        meaning: 'Двойственность американской мечты и блеска Голливуда: внешняя красота скрывает ловушку.'
-      },
-      {
-        quote: 'we have not had that spirit here since nineteen sixty nine',
-        meaning: 'Игра слов на «spirit»: утрата идеалистического духа 1960-х в эпоху материализма.'
-      },
-      {
-        quote: 'some dance to remember some dance to forget',
-        meaning: 'Два противоположных способа справляться с прошлым — ностальгия и бегство от памяти.'
-      }
-    ],
-    emotionalTone: 'Загадочный, гипнотический, кинематографично-тревожный.'
-  },
-  'hozier-take-me-to-church': {
-    mainTheme:
-      'Манифест человеческой любви и достоинства против лицемерия, осуждения и догматизма: истинная «церковь» героя — в искренности и принятии.',
-    culturalContext:
-      'Дебютный сингл ирландского музыканта Хозиера (2013), номинированный на «Грэмми» как «Песня года». Текст построен на мощной религиозной и литературной образности.',
-    metaphors: [
-      {
-        quote: 'she is the giggle at a funeral',
-        meaning: 'Живая, непокорная человечность, нарушающая чопорную и холодную строгость.'
-      },
-      {
-        quote: 'we were born sick',
-        meaning: 'Ирония над идеей врождённой вины, которую общество пытается навязать человеку.'
-      },
-      {
-        quote: 'if i am a pagan of the good times my lover is the sunlight',
-        meaning: 'Возвращение к естественной, светлой радости жизни вне искусственных запретов.'
-      }
-    ],
-    emotionalTone: 'Страстный, драматичный, бунтарский и проникновенный.'
-  },
-  'kendrick-count-me-out': {
-    mainTheme:
-      'Психологический прорыв, принятие собственных ошибок и победа над внутренним критиком: когда тебя списывают со счетов, начинается настоящий рост.',
-    culturalContext:
-      'Ключевой трек с альбома «Mr. Morale & the Big Steppers» (2022), построенного как серия сеансов психотерапии («Session ten, breakthrough»).',
-    metaphors: [
-      {
-        quote: 'we may not know which way to go on this dark road',
-        meaning: 'Честное признание растерянности перед началом внутреннего исцеления.'
-      },
-      {
-        quote: 'what is fair when the money does not take things back',
-        meaning: 'Осознание того, что слава и богатство не способны стереть душевную боль и прошлое.'
-      },
-      {
-        quote: 'in my head too much i shut down too',
-        meaning: 'Уязвимость и честный рассказ об эмоциональном выгорании.'
-      }
-    ],
-    emotionalTone: 'Исповедальный, напряжённый, катарсический и стойкий.'
-  },
-  'kendrick-prayer': {
-    mainTheme:
-      'Глубокая притча о разделении искусства и личности творца: написанная от лица самой песни (ABC Майкла Джексона и других произведений), она призывает помнить, что искусство принадлежит людям.',
-    culturalContext:
-      'Культовый неизданный шедевр Кендрика Ламара эпохи «Mr. Morale», получивший признание критиков за блестящий приём олицетворения (personification) и философскую глубину.',
-    metaphors: [
-      {
-        quote: 'the first three letters of the alphabet my name',
-        meaning: 'Загадка-олицетворение: рассказчиком первого куплета выступает сама песня «ABC» Jackson 5.'
-      },
-      {
-        quote: 'my perfect father had many flaws',
-        meaning: 'Конфликт между гениальностью художника и его человеческим несовершенством.'
-      },
-      {
-        quote: 'that was a common thread',
-        meaning: '«Связующая нить» — музыка объединяет поколения вопреки всем противоречиям.'
-      }
-    ],
-    emotionalTone: 'Торжественный, притчевый, глубокий и сострадательный.'
-  },
-  'kendrick-samidot': {
-    mainTheme:
-      'Размышление о хрупкости жизни, памяти и цене выживания: разные голоса из родного квартала просят Кендрика сохранить их истории в песне, когда «погаснет свет».',
-    culturalContext:
-      '12-минутный центральный эпос альбома «good kid, m.A.A.d city» (2012), признанный одним из величайших сторителлинг-треков в истории хип-хопа.',
-    metaphors: [
-      {
-        quote: 'when the lights shut off and it is my turn to settle down',
-        meaning: 'Тихая, пронзительная метафора смерти и страха быть забытым.'
-      },
-      {
-        quote: 'promise that you will sing about me',
-        meaning: 'Просьба о бессмертии через искусство и честную память.'
-      },
-      {
-        quote: 'borrow a piece of mind',
-        meaning: 'Игра слов (piece / peace of mind): попытка найти хоть немного душевного покоя посреди хаоса.'
-      }
-    ],
-    emotionalTone: 'Трагичный, искренний, глубоко человечный и кинематографичный.'
-  },
-  'j-cole-4-your-eyez-only': {
-    mainTheme:
-      'Письмо-завещание отца своей маленькой дочери, рассказанное глазами друга: честная история о том, как любовь к ребёнку меняет взгляд на жизнь и даёт смысл бороться.',
-    culturalContext:
-      'Заглавный 9-минутный финал альбома «4 Your Eyez Only» (2016) — один из самых сильных нарративных треков J. Cole с неожиданным сюжетным поворотом в последнем куплете.',
-    metaphors: [
-      {
-        quote: 'for your eyes only',
-        meaning: 'Интимное послание, адресованное лично дочери — правда без прикрас.'
-      },
-      {
-        quote: 'i might be low for the moment but i will bounce back',
-        meaning: 'Вера в способность выстоять и подняться, несмотря на жизненные удары.'
-      },
-      {
-        quote: 'despite the charges back to the wall i fight regardless',
-        meaning: 'Решимость бороться за будущее семьи, даже когда обстоятельства загнали в угол.'
-      }
-    ],
-    emotionalTone: 'Проникновенный, серьёзный, трогательный и честный.'
-  }
 }
 
 // Precomputed deterministic snowflake specs (zero random re-renders, ultra-light CSS transform)
@@ -2148,8 +1847,13 @@ export const MusicClipsView: React.FC<MusicClipsViewProps> = ({ onStartTyping, o
                             </div>
                           </div>
 
-                          <div className="font-mono text-[11px] text-sky-200/90 bg-[#050810] px-3 py-2 rounded-xl border border-white/[0.06] select-text">
-                            <span className="text-slate-500 mr-1.5">Контекст:</span>«{item.contextQuote}»
+                          <div className="bg-[#050810] px-3 py-2 rounded-xl border border-white/[0.06] space-y-1">
+                            <div className="font-mono text-[11px] text-sky-200/90 select-text">
+                              <span className="text-slate-500 mr-1.5">Контекст:</span>«{item.contextQuote}»
+                            </div>
+                            <div className="text-[11px] text-slate-400 leading-snug">
+                              {item.contextTranslation}
+                            </div>
                           </div>
                         </div>
                       )
@@ -2160,11 +1864,16 @@ export const MusicClipsView: React.FC<MusicClipsViewProps> = ({ onStartTyping, o
 
               {/* TAB 3: AI DEEP MEANING & CULTURAL CONTEXT */}
               {activeTab === 'ai-meaning' && (
-                <div className="space-y-3 animate-fade-in" data-testid="ai-meaning-content">
+                <div className="space-y-3 animate-fade-in max-h-[610px] overflow-y-auto pr-1.5" data-testid="ai-meaning-content">
                   <div className="p-4 rounded-2xl bg-gradient-to-r from-indigo-500/10 via-transparent to-sky-500/10 border border-white/[0.08] space-y-2">
-                    <div className="flex items-center space-x-1.5 text-indigo-300 text-xs font-bold">
-                      <Sparkles className="w-4 h-4 text-sky-400" />
-                      <span>Главный философский посыл</span>
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center space-x-1.5 text-indigo-300 text-xs font-bold">
+                        <Sparkles className="w-4 h-4 text-sky-400" />
+                        <span>Главный философский посыл</span>
+                      </div>
+                      <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-indigo-500/15 text-indigo-200 border border-indigo-400/25">
+                        Тон: {aiAnalysis.emotionalTone.split(',')[0]}
+                      </span>
                     </div>
                     <p className="text-xs sm:text-[13px] text-slate-300 leading-relaxed">{aiAnalysis.mainTheme}</p>
                   </div>
@@ -2177,17 +1886,38 @@ export const MusicClipsView: React.FC<MusicClipsViewProps> = ({ onStartTyping, o
                     <p className="text-xs sm:text-[13px] text-slate-300 leading-relaxed">{aiAnalysis.culturalContext}</p>
                   </div>
 
+                  {/* Historical & Cultural References */}
+                  {aiAnalysis.references && aiAnalysis.references.length > 0 && (
+                    <div className="space-y-2" data-testid="ai-references-section">
+                      <div className="flex items-center space-x-1.5 text-xs font-bold text-slate-200">
+                        <span className="w-2 h-2 rounded-full bg-amber-400 shadow-[0_0_8px_#fbbf24]"></span>
+                        <span>Исторические и культурные отсылки:</span>
+                      </div>
+                      <div className="space-y-2">
+                        {aiAnalysis.references.map((ref, idx) => (
+                          <div
+                            key={idx}
+                            className="p-3.5 rounded-2xl bg-amber-500/[0.04] border border-amber-400/20 space-y-1"
+                          >
+                            <div className="text-xs font-bold text-amber-300">{ref.title}</div>
+                            <div className="text-xs text-slate-300 leading-relaxed">{ref.detail}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
                   {/* Metaphor Breakdown */}
                   <div className="space-y-2.5">
                     <div className="flex items-center space-x-1.5 text-xs font-bold text-slate-200">
                       <span className="w-2 h-2 rounded-full bg-sky-400 shadow-[0_0_8px_#38bdf8]"></span>
                       <span>Скрытый подтекст ключевых метафор:</span>
                     </div>
-                    <div className="space-y-2.5 max-h-[380px] overflow-y-auto pr-1.5">
+                    <div className="space-y-2.5">
                       {aiAnalysis.metaphors.map((m, idx) => (
                         <div
                           key={idx}
-                          className="p-4 rounded-2xl bg-white/[0.025] border border-white/[0.07] space-y-1.5 hover:border-white/[0.14] transition-all"
+                          className="p-3.5 rounded-2xl bg-white/[0.025] border border-white/[0.07] space-y-1.5 hover:border-white/[0.14] transition-all"
                         >
                           <div className="text-xs sm:text-sm font-mono font-semibold text-sky-300 flex items-center space-x-1.5 select-text">
                             <span className="text-sky-400 font-serif text-sm">“</span>

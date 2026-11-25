@@ -182,7 +182,7 @@ MusicSubtitleLine MakeSub(int id, double start, double end, string textEn, strin
     var weights = tokens.Select(w => Math.Max(2.0, w.Length + 1.5)).ToArray();
     var totalWeight = weights.Sum();
     var rawDuration = Math.Max(0.4, end - start);
-    var vocalDuration = Math.Min(rawDuration, Math.Max(1.8, tokens.Length * 0.58));
+    var vocalDuration = Math.Min(rawDuration, Math.Max(3.6, tokens.Length * 0.95));
     var vocalEnd = Math.Round(start + vocalDuration, 2);
     var words = new List<SubtitleWord>(tokens.Length);
     var cursor = start;

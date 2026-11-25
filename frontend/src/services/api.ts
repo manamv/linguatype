@@ -229,7 +229,7 @@ function makeSub(id: number, startSeconds: number, endSeconds: number, textEn: s
   const weights = tokens.map(w => Math.max(2.0, w.length + 1.5))
   const totalWeight = weights.reduce((acc, v) => acc + v, 0)
   const rawDuration = Math.max(0.4, endSeconds - startSeconds)
-  const vocalDuration = Math.min(rawDuration, Math.max(1.8, tokens.length * 0.58))
+  const vocalDuration = Math.min(rawDuration, Math.max(3.6, tokens.length * 0.95))
   const vocalEnd = Math.round((startSeconds + vocalDuration) * 100) / 100
   let cursor = startSeconds
   const words = tokens.map((word, idx) => {
