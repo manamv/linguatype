@@ -338,6 +338,47 @@ var musicLessons = new List<MusicLesson>
             new("sl-3", "staring at your pictures wishing i was with you i could let it go but i am not a quitter", "смотрю на твои фото желая быть с тобой я мог бы отпустить это но я не сдаюсь", "причастные обороты staring wishing и модальный could"),
             new("sl-4", "this is not going to heal if we do not make a deal i would rather not so baby let us get on", "это не заживет если мы не договоримся я бы предпочел этого не делать так что давай двигаться дальше", "first conditional и конструкция would rather not")
         ]
+    ),
+    new(
+        "wham-last-christmas",
+        "Last Christmas",
+        "Wham!",
+        "A2",
+        "https://www.youtube.com/embed/E8gmARGvPlI",
+        "https://images.unsplash.com/photo-1512389142860-9c449e58a543?w=600&auto=format&fit=crop&q=80",
+        "Past Simple, Future Will, Second Conditional and English idioms",
+        // Duration-matched LRC from lrclib.net for Wham! - Last Christmas (Official Video E8gmARGvPlI, 279s)
+        [
+            MakeSub(1, 17.41, 22.29, "last christmas i gave you my heart", "в прошлое рождество я отдал тебе свое сердце"),
+            MakeSub(2, 22.29, 26.87, "but the very next day you gave it away", "но на следующий же день ты от него избавилась"),
+            MakeSub(3, 26.87, 31.79, "this year to save me from tears", "в этом году чтобы уберечь себя от слез"),
+            MakeSub(4, 31.79, 34.98, "i will give it to someone special", "я отдам его кому то особенному"),
+            MakeSub(5, 34.98, 42.72, "last christmas i gave you my heart", "в прошлое рождество я отдал тебе свое сердце"),
+            MakeSub(6, 42.72, 49.08, "but the very next day you gave it away this year to save me from tears", "но на следующий же день ты отдала его в этом году чтобы спасти себя от слез"),
+            MakeSub(7, 49.08, 56.00, "i will give it to someone special", "я отдам его кому то особенному"),
+            MakeSub(8, 72.06, 77.05, "once bitten and twice shy", "обжегшись однажды дуешь на воду"),
+            MakeSub(9, 77.05, 80.57, "i keep my distance but you still catch my eye", "я держу дистанцию но ты все еще привлекаешь мой взгляд"),
+            MakeSub(10, 80.57, 85.11, "tell me baby do you recognize me", "скажи мне детка ты узнаешь меня"),
+            MakeSub(11, 85.11, 91.16, "well it has been a year it does not surprise me", "ну прошел уже год меня это не удивляет"),
+            MakeSub(12, 91.16, 94.38, "happy christmas i wrapped it up and sent it", "с рождеством я упаковал это и отправил"),
+            MakeSub(13, 94.38, 98.66, "with a note saying i love you i meant it", "с запиской я люблю тебя я говорил это искренне"),
+            MakeSub(14, 98.66, 103.15, "now i know what a fool i have been", "теперь я знаю каким глупцом я был"),
+            MakeSub(15, 103.15, 107.83, "but if you kissed me now i know you would fool me again", "но если бы ты поцеловала меня сейчас я знаю ты бы снова меня обманула"),
+            MakeSub(16, 162.05, 166.87, "a crowded room friends with tired eyes", "полная комната друзей с уставшими глазами"),
+            MakeSub(17, 166.87, 171.93, "i am hiding from you and your soul of ice", "я прячусь от тебя и твоей ледяной души")
+        ],
+        [
+            new("Past Simple vs Future Will", "last christmas i gave you my heart ... i will give it to someone special", "Чёткий контраст времён: gave (Past Simple для прошлого Рождества) и will give (решение на будущее).", "tenses"),
+            new("Phrasal Verb: Give Away", "the very next day you gave it away", "Фразовый глагол give away означает «отдать даром / избавиться от чего-то небрежно».", "phrasal-verbs"),
+            new("Second Conditional (Unreal Present)", "if you kissed me now i know you would fool me again", "Нереальное условие настоящего: if + Past Simple (kissed), would + V1 (would fool).", "conditionals"),
+            new("Classic Proverb: Once Bitten, Twice Shy", "once bitten and twice shy", "Знаменитая пословица: «обжегшись однажды, в следующий раз будешь вдвойне осторожен».", "idioms")
+        ],
+        [
+            new("lc-1", "last christmas i gave you my heart but the very next day you gave it away", "в прошлое рождество я отдал тебе свое сердце но на следующий же день ты отдала его", "past simple gave и фразовый глагол give away"),
+            new("lc-2", "this year to save me from tears i will give it to someone special", "в этом году чтобы уберечь себя от слез я отдам его кому то особенному", "infinitive of purpose to save и будущее время will give"),
+            new("lc-3", "once bitten and twice shy i keep my distance but you still catch my eye", "обжегшись однажды дуешь на воду я держу дистанцию но ты все еще притягиваешь взгляд", "идиомы once bitten twice shy и catch my eye"),
+            new("lc-4", "now i know what a fool i have been but if you kissed me now i know you would fool me again", "теперь я знаю каким глупцом я был но если бы ты поцеловала меня сейчас ты бы снова меня обманула", "present perfect i have been и second conditional if kissed would fool")
+        ]
     )
 };
 

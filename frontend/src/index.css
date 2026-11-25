@@ -81,3 +81,27 @@
 .animate-caret {
   animation: caret-blink 0.9s infinite;
 }
+
+/* Lightweight GPU-only subtle snowfall for Last Christmas */
+@keyframes snowfall-fall {
+  0% {
+    transform: translate3d(0, -10vh, 0);
+  }
+  50% {
+    transform: translate3d(18px, 50vh, 0);
+  }
+  100% {
+    transform: translate3d(-12px, 108vh, 0);
+  }
+}
+
+.snowflake-particle {
+  position: absolute;
+  top: -12px;
+  border-radius: 9999px;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.95) 0%, rgba(186, 230, 253, 0.4) 70%, transparent 100%);
+  will-change: transform;
+  animation-name: snowfall-fall;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}

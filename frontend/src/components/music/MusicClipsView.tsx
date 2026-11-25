@@ -159,8 +159,39 @@ const AI_SONG_ANALYSES: Record<
       }
     ],
     emotionalTone: 'Интимный, чувственный, слегка тревожный, но искренний.'
+  },
+  'wham-last-christmas': {
+    mainTheme:
+      'Светлая зимняя грусть о безответной любви и попытке сохранить сердце от повторной боли, когда встречаешь былую любовь год спустя в праздничной компании.',
+    culturalContext:
+      'Написана и спродюсирована Джорджем Майклом в 1984 году (Wham!). Один из самых узнаваемых рождественских хитов в истории поп-музыки, знаменитый клип снят на горнолыжном курорте Саас-Фе в Швейцарии.',
+    metaphors: [
+      {
+        quote: 'once bitten and twice shy',
+        meaning: 'Классическая английская пословица: получив горький опыт однажды, человек становится вдвойне осторожным.'
+      },
+      {
+        quote: 'your soul of ice',
+        meaning: '«Ледяная душа» — контраст между уютным зимним праздником и эмоциональной холодностью возлюбленной.'
+      },
+      {
+        quote: 'a shoulder to cry on',
+        meaning: '«Плечо, в которое можно поплакаться» — осознание героя, что его использовали лишь как временную поддержку.'
+      }
+    ],
+    emotionalTone: 'Ностальгический, тёплый, зимне-меланхоличный.'
   }
 }
+
+// Precomputed deterministic snowflake specs (zero random re-renders, ultra-light CSS transform)
+const SNOWFLAKES = Array.from({ length: 22 }, (_, i) => ({
+  id: i,
+  left: `${(i * 4.7 + (i % 3) * 1.9) % 98}%`,
+  size: 3 + (i % 4) * 1.5,
+  opacity: 0.22 + (i % 4) * 0.09,
+  duration: `${10 + (i % 6) * 2.4}s`,
+  delay: `-${(i * 1.3) % 14}s`
+}))
 
 export const MusicClipsView: React.FC<MusicClipsViewProps> = ({ onStartTyping, onBack }) => {
   const [songsList, setSongsList] = useState<
@@ -846,10 +877,33 @@ export const MusicClipsView: React.FC<MusicClipsViewProps> = ({ onStartTyping, o
 
   return (
     <div
-      className="space-y-6 max-w-5xl mx-auto w-full animate-fade-in"
+      className="relative space-y-6 max-w-5xl mx-auto w-full animate-fade-in"
       data-testid="music-clips-view"
       onMouseUp={handleTextSelection}
     >
+      {/* Subtle GPU-only snowfall overlay when Last Christmas is active */}
+      {selectedSongId === 'wham-last-christmas' && (
+        <div
+          className="pointer-events-none fixed inset-0 z-10 overflow-hidden"
+          aria-hidden="true"
+          data-testid="christmas-snowfall"
+        >
+          {SNOWFLAKES.map(flake => (
+            <span
+              key={flake.id}
+              className="snowflake-particle"
+              style={{
+                left: flake.left,
+                width: `${flake.size}px`,
+                height: `${flake.size}px`,
+                opacity: flake.opacity,
+                animationDuration: flake.duration,
+                animationDelay: flake.delay
+              }}
+            />
+          ))}
+        </div>
+      )}
       {/* Header Banner */}
       <div className="flex flex-wrap items-center justify-between gap-4 p-5 rounded-3xl bg-[#090d16]/95 border border-white/[0.08] shadow-2xl shadow-black/80">
         <div className="flex items-center space-x-3.5">

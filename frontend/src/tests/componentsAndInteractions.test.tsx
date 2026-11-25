@@ -647,5 +647,12 @@ describe('Criterion 8: Component Rendering and User Interactions', () => {
     expect(hintBtn).toHaveTextContent(/Подсказка/i)
     fireEvent.click(hintBtn)
     expect(hintBtn).toHaveTextContent(/Скрыть/i)
+
+    // Verify Wham! - Last Christmas appears and enables subtle snowfall overlay
+    expect(screen.queryByTestId('christmas-snowfall')).not.toBeInTheDocument()
+    const xmasTab = await screen.findByTestId('song-tab-wham-last-christmas')
+    expect(xmasTab).toHaveTextContent(/Last Christmas/i)
+    fireEvent.click(xmasTab)
+    expect(await screen.findByTestId('christmas-snowfall')).toBeInTheDocument()
   })
 })
