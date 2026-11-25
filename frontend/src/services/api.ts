@@ -228,11 +228,13 @@ function makeSub(id: number, startSeconds: number, endSeconds: number, textEn: s
   const tokens = textEn.split(' ').filter(Boolean)
   const weights = tokens.map(w => Math.max(2.0, w.length + 1.5))
   const totalWeight = weights.reduce((acc, v) => acc + v, 0)
-  const duration = Math.max(0.4, endSeconds - startSeconds)
+  const rawDuration = Math.max(0.4, endSeconds - startSeconds)
+  const vocalDuration = Math.min(rawDuration, Math.max(1.8, tokens.length * 0.58))
+  const vocalEnd = Math.round((startSeconds + vocalDuration) * 100) / 100
   let cursor = startSeconds
   const words = tokens.map((word, idx) => {
-    const wDur = duration * (weights[idx] / totalWeight)
-    const wEnd = idx === tokens.length - 1 ? endSeconds : Math.round((cursor + wDur) * 100) / 100
+    const wDur = vocalDuration * (weights[idx] / totalWeight)
+    const wEnd = idx === tokens.length - 1 ? vocalEnd : Math.round((cursor + wDur) * 100) / 100
     const entry = { word, start: Math.round(cursor * 100) / 100, end: wEnd }
     cursor = wEnd
     return entry
@@ -419,7 +421,7 @@ const FALLBACK_MUSIC_LESSONS: MusicLesson[] = [
     title: 'Coming Up Roses',
     artist: 'Harry Styles',
     level: 'B1',
-    videoUrl: 'https://www.youtube.com/embed/_3GKsIFtEoE',
+    videoUrl: 'https://www.youtube.com/embed/2XdPlgeg71Y',
     thumbnailUrl: 'https://images.unsplash.com/photo-1490750967868-88aa4486c946?w=600&auto=format&fit=crop&q=80',
     grammarFocus: 'English idioms (coming up roses, stay the course), First Conditional and Present Perfect',
     subtitles: [
@@ -492,7 +494,7 @@ const FALLBACK_MUSIC_LESSONS: MusicLesson[] = [
     title: 'Shape of My Heart',
     artist: 'Sting',
     level: 'B1',
-    videoUrl: 'https://www.youtube.com/embed/cYiw-2mDlDU',
+    videoUrl: 'https://www.youtube.com/embed/NlwIDxCjL-8',
     thumbnailUrl: 'https://images.unsplash.com/photo-1511193311914-0346f16efe90?w=600&auto=format&fit=crop&q=80',
     grammarFocus: 'Present Simple habits, Modal May (possibility), Infinitive of Purpose and Metaphors',
     subtitles: [
@@ -569,24 +571,24 @@ const FALLBACK_MUSIC_LESSONS: MusicLesson[] = [
     title: 'Take Me to Church',
     artist: 'Hozier',
     level: 'B2',
-    videoUrl: 'https://www.youtube.com/embed/NGNk6u_kLso',
+    videoUrl: 'https://www.youtube.com/embed/PVjiKRfKpPI',
     thumbnailUrl: 'https://images.unsplash.com/photo-1519681393784-d120267933ba?w=600&auto=format&fit=crop&q=80',
     grammarFocus: 'Past Modals (should have), Passive Voice, Future Will and Literary Metaphors',
     subtitles: [
-      makeSub(1, 0.62, 6.20, 'my lover has got humor she is the giggle at a funeral', 'у моей возлюбленной есть чувство юмора она смех на похоронах'),
-      makeSub(2, 6.20, 7.76, 'knows everybody disapproval', 'знает всеобщее неодобрение'),
-      makeSub(3, 7.76, 12.11, 'they should have worshipped her sooner', 'им следовало поклоняться ей раньше'),
-      makeSub(4, 12.11, 17.87, 'if the heavens ever did speak she is the last true mouthpiece', 'если небеса когда либо говорили она последний истинный голос'),
-      makeSub(5, 17.87, 23.71, 'every sunday is getting more bleak a fresh poison each week', 'каждое воскресенье становится мрачнее свежий яд каждую неделю'),
-      makeSub(6, 23.71, 27.48, 'we were born sick you heard them say it', 'мы родились больными ты слышала как они говорили это'),
-      makeSub(7, 27.48, 32.89, 'my church offers no absolutes she tells me worship in the bedroom', 'моя церковь не предлагает абсолютов она говорит мне молись в спальне'),
-      makeSub(8, 32.89, 38.67, 'the only heaven i will be sent to is when i am alone with you', 'единственный рай куда меня отправят это когда я наедине с тобой'),
-      makeSub(9, 38.67, 42.00, 'i was born sick but i love it', 'я родился больным но мне это нравится'),
-      makeSub(10, 42.00, 44.83, 'command me to be well', 'прикажи мне исцелиться'),
-      makeSub(11, 56.81, 61.88, 'take me to church i will worship like a dog at the shrine of your lies', 'отведи меня в церковь я буду поклоняться у алтаря твоей лжи'),
-      makeSub(12, 61.88, 65.70, 'i will tell you my sins and you can sharpen your knife', 'я расскажу тебе свои грехи и ты можешь наточить свой нож'),
-      makeSub(13, 65.70, 71.65, 'offer me that deathless death oh good god let me give you my life', 'подари мне эту бессмертную смерть о боже позволь мне отдать тебе свою жизнь'),
-      makeSub(14, 87.95, 93.00, 'if i am a pagan of the good times my lover is the sunlight', 'если я язычник добрых времен моя возлюбленная это солнечный свет')
+      makeSub(1, 11.12, 16.70, 'my lover has got humor she is the giggle at a funeral', 'у моей возлюбленной есть чувство юмора она смех на похоронах'),
+      makeSub(2, 16.70, 18.26, 'knows everybody disapproval', 'знает всеобщее неодобрение'),
+      makeSub(3, 18.26, 22.61, 'they should have worshipped her sooner', 'им следовало поклоняться ей раньше'),
+      makeSub(4, 22.61, 28.37, 'if the heavens ever did speak she is the last true mouthpiece', 'если небеса когда либо говорили она последний истинный голос'),
+      makeSub(5, 28.37, 34.21, 'every sunday is getting more bleak a fresh poison each week', 'каждое воскресенье становится мрачнее свежий яд каждую неделю'),
+      makeSub(6, 34.21, 37.98, 'we were born sick you heard them say it', 'мы родились больными ты слышала как они говорили это'),
+      makeSub(7, 37.98, 43.39, 'my church offers no absolutes she tells me worship in the bedroom', 'моя церковь не предлагает абсолютов она говорит мне молись в спальне'),
+      makeSub(8, 43.39, 49.17, 'the only heaven i will be sent to is when i am alone with you', 'единственный рай куда меня отправят это когда я наедине с тобой'),
+      makeSub(9, 49.17, 52.50, 'i was born sick but i love it', 'я родился больным но мне это нравится'),
+      makeSub(10, 52.50, 55.33, 'command me to be well', 'прикажи мне исцелиться'),
+      makeSub(11, 67.31, 72.38, 'take me to church i will worship like a dog at the shrine of your lies', 'отведи меня в церковь я буду поклоняться у алтаря твоей лжи'),
+      makeSub(12, 72.38, 76.20, 'i will tell you my sins and you can sharpen your knife', 'я расскажу тебе свои грехи и ты можешь наточить свой нож'),
+      makeSub(13, 76.20, 82.15, 'offer me that deathless death oh good god let me give you my life', 'подари мне эту бессмертную смерть о боже позволь мне отдать тебе свою жизнь'),
+      makeSub(14, 98.45, 103.50, 'if i am a pagan of the good times my lover is the sunlight', 'если я язычник добрых времен моя возлюбленная это солнечный свет')
     ],
     grammarBreakdown: [
       { ruleTitle: 'Past Modal: Should Have + V3', lyricQuote: 'they should have worshipped her sooner', explanation: 'should have + V3 выражает упрёк или сожаление о действии, которое не произошло в прошлом.', grammarTag: 'modals' },
@@ -605,7 +607,7 @@ const FALLBACK_MUSIC_LESSONS: MusicLesson[] = [
     title: 'Count Me Out',
     artist: 'Kendrick Lamar',
     level: 'B2',
-    videoUrl: 'https://www.youtube.com/embed/uEbRjy7RNKU',
+    videoUrl: 'https://www.youtube.com/embed/6nTcdw7bVdc',
     thumbnailUrl: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=600&auto=format&fit=crop&q=80',
     grammarFocus: 'Phrasal Verbs (count out, shut down), Modals (may), Colloquial Speech & Rhetorical Questions',
     subtitles: [
@@ -642,7 +644,7 @@ const FALLBACK_MUSIC_LESSONS: MusicLesson[] = [
     title: 'Prayer',
     artist: 'Kendrick Lamar',
     level: 'C1',
-    videoUrl: 'https://www.youtube.com/embed/Jug6yCFhAMo',
+    videoUrl: 'https://www.youtube.com/embed/BPbFD41Jyso',
     thumbnailUrl: 'https://images.unsplash.com/photo-1507838153414-b4b713384a76?w=600&auto=format&fit=crop&q=80',
     grammarFocus: 'Passive Voice in Past, Causative Make, Advanced Literary Vocabulary & Allegory',
     subtitles: [

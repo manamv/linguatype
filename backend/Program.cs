@@ -181,13 +181,15 @@ MusicSubtitleLine MakeSub(int id, double start, double end, string textEn, strin
     var tokens = textEn.Split(' ', StringSplitOptions.RemoveEmptyEntries);
     var weights = tokens.Select(w => Math.Max(2.0, w.Length + 1.5)).ToArray();
     var totalWeight = weights.Sum();
-    var duration = Math.Max(0.4, end - start);
+    var rawDuration = Math.Max(0.4, end - start);
+    var vocalDuration = Math.Min(rawDuration, Math.Max(1.8, tokens.Length * 0.58));
+    var vocalEnd = Math.Round(start + vocalDuration, 2);
     var words = new List<SubtitleWord>(tokens.Length);
     var cursor = start;
     for (int i = 0; i < tokens.Length; i++)
     {
-        var wDur = duration * (weights[i] / totalWeight);
-        var wEnd = i == tokens.Length - 1 ? end : Math.Round(cursor + wDur, 2);
+        var wDur = vocalDuration * (weights[i] / totalWeight);
+        var wEnd = i == tokens.Length - 1 ? vocalEnd : Math.Round(cursor + wDur, 2);
         words.Add(new SubtitleWord(tokens[i], Math.Round(cursor, 2), wEnd));
         cursor = wEnd;
     }
@@ -385,7 +387,7 @@ var musicLessons = new List<MusicLesson>
         "Coming Up Roses",
         "Harry Styles",
         "B1",
-        "https://www.youtube.com/embed/_3GKsIFtEoE",
+        "https://www.youtube.com/embed/2XdPlgeg71Y",
         "https://images.unsplash.com/photo-1490750967868-88aa4486c946?w=600&auto=format&fit=crop&q=80",
         "English idioms (coming up roses, stay the course), First Conditional and Present Perfect",
         // Duration-matched LRC from lrclib.net (38917132) for Harry Styles - Coming Up Roses (_3GKsIFtEoE, 249s)
@@ -460,7 +462,7 @@ var musicLessons = new List<MusicLesson>
         "Shape of My Heart",
         "Sting",
         "B1",
-        "https://www.youtube.com/embed/cYiw-2mDlDU",
+        "https://www.youtube.com/embed/NlwIDxCjL-8",
         "https://images.unsplash.com/photo-1511193311914-0346f16efe90?w=600&auto=format&fit=crop&q=80",
         "Present Simple habits, Modal May (possibility), Infinitive of Purpose and Metaphors",
         // Duration-matched LRC from lrclib.net (33534655) for Sting - Shape of My Heart (cYiw-2mDlDU, 275s)
@@ -539,25 +541,25 @@ var musicLessons = new List<MusicLesson>
         "Take Me to Church",
         "Hozier",
         "B2",
-        "https://www.youtube.com/embed/NGNk6u_kLso",
+        "https://www.youtube.com/embed/PVjiKRfKpPI",
         "https://images.unsplash.com/photo-1519681393784-d120267933ba?w=600&auto=format&fit=crop&q=80",
         "Past Modals (should have), Passive Voice, Future Will and Literary Metaphors",
         // Duration-matched LRC from lrclib.net (16504502) for Hozier - Take Me to Church (NGNk6u_kLso, 240s)
         [
-            MakeSub(1, 0.62, 6.20, "my lover has got humor she is the giggle at a funeral", "у моей возлюбленной есть чувство юмора она смех на похоронах"),
-            MakeSub(2, 6.20, 7.76, "knows everybody disapproval", "знает всеобщее неодобрение"),
-            MakeSub(3, 7.76, 12.11, "they should have worshipped her sooner", "им следовало поклоняться ей раньше"),
-            MakeSub(4, 12.11, 17.87, "if the heavens ever did speak she is the last true mouthpiece", "если небеса когда либо говорили она последний истинный голос"),
-            MakeSub(5, 17.87, 23.71, "every sunday is getting more bleak a fresh poison each week", "каждое воскресенье становится мрачнее свежий яд каждую неделю"),
-            MakeSub(6, 23.71, 27.48, "we were born sick you heard them say it", "мы родились больными ты слышала как они говорили это"),
-            MakeSub(7, 27.48, 32.89, "my church offers no absolutes she tells me worship in the bedroom", "моя церковь не предлагает абсолютов она говорит мне молись в спальне"),
-            MakeSub(8, 32.89, 38.67, "the only heaven i will be sent to is when i am alone with you", "единственный рай куда меня отправят это когда я наедине с тобой"),
-            MakeSub(9, 38.67, 42.00, "i was born sick but i love it", "я родился больным но мне это нравится"),
-            MakeSub(10, 42.00, 44.83, "command me to be well", "прикажи мне исцелиться"),
-            MakeSub(11, 56.81, 61.88, "take me to church i will worship like a dog at the shrine of your lies", "отведи меня в церковь я буду поклоняться у алтаря твоей лжи"),
-            MakeSub(12, 61.88, 65.70, "i will tell you my sins and you can sharpen your knife", "я расскажу тебе свои грехи и ты можешь наточить свой нож"),
-            MakeSub(13, 65.70, 71.65, "offer me that deathless death oh good god let me give you my life", "подари мне эту бессмертную смерть о боже позволь мне отдать тебе свою жизнь"),
-            MakeSub(14, 87.95, 93.00, "if i am a pagan of the good times my lover is the sunlight", "если я язычник добрых времен моя возлюбленная это солнечный свет")
+            MakeSub(1, 11.12, 16.70, "my lover has got humor she is the giggle at a funeral", "у моей возлюбленной есть чувство юмора она смех на похоронах"),
+            MakeSub(2, 16.70, 18.26, "knows everybody disapproval", "знает всеобщее неодобрение"),
+            MakeSub(3, 18.26, 22.61, "they should have worshipped her sooner", "им следовало поклоняться ей раньше"),
+            MakeSub(4, 22.61, 28.37, "if the heavens ever did speak she is the last true mouthpiece", "если небеса когда либо говорили она последний истинный голос"),
+            MakeSub(5, 28.37, 34.21, "every sunday is getting more bleak a fresh poison each week", "каждое воскресенье становится мрачнее свежий яд каждую неделю"),
+            MakeSub(6, 34.21, 37.98, "we were born sick you heard them say it", "мы родились больными ты слышала как они говорили это"),
+            MakeSub(7, 37.98, 43.39, "my church offers no absolutes she tells me worship in the bedroom", "моя церковь не предлагает абсолютов она говорит мне молись в спальне"),
+            MakeSub(8, 43.39, 49.17, "the only heaven i will be sent to is when i am alone with you", "единственный рай куда меня отправят это когда я наедине с тобой"),
+            MakeSub(9, 49.17, 52.50, "i was born sick but i love it", "я родился больным но мне это нравится"),
+            MakeSub(10, 52.50, 55.33, "command me to be well", "прикажи мне исцелиться"),
+            MakeSub(11, 67.31, 72.38, "take me to church i will worship like a dog at the shrine of your lies", "отведи меня в церковь я буду поклоняться у алтаря твоей лжи"),
+            MakeSub(12, 72.38, 76.20, "i will tell you my sins and you can sharpen your knife", "я расскажу тебе свои грехи и ты можешь наточить свой нож"),
+            MakeSub(13, 76.20, 82.15, "offer me that deathless death oh good god let me give you my life", "подари мне эту бессмертную смерть о боже позволь мне отдать тебе свою жизнь"),
+            MakeSub(14, 98.45, 103.50, "if i am a pagan of the good times my lover is the sunlight", "если я язычник добрых времен моя возлюбленная это солнечный свет")
         ],
         [
             new("Past Modal: Should Have + V3", "they should have worshipped her sooner", "should have + V3 выражает упрёк или сожаление о действии, которое не произошло в прошлом.", "modals"),
@@ -576,7 +578,7 @@ var musicLessons = new List<MusicLesson>
         "Count Me Out",
         "Kendrick Lamar",
         "B2",
-        "https://www.youtube.com/embed/uEbRjy7RNKU",
+        "https://www.youtube.com/embed/6nTcdw7bVdc",
         "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=600&auto=format&fit=crop&q=80",
         "Phrasal Verbs (count out, shut down), Modals (may), Colloquial Speech & Rhetorical Questions",
         // Duration-matched LRC from lrclib.net (36363856) for Kendrick Lamar - Count Me Out (uEbRjy7RNKU, 284s)
@@ -614,7 +616,7 @@ var musicLessons = new List<MusicLesson>
         "Prayer",
         "Kendrick Lamar",
         "C1",
-        "https://www.youtube.com/embed/Jug6yCFhAMo",
+        "https://www.youtube.com/embed/BPbFD41Jyso",
         "https://images.unsplash.com/photo-1507838153414-b4b713384a76?w=600&auto=format&fit=crop&q=80",
         "Passive Voice in Past, Causative Make, Advanced Literary Vocabulary & Allegory",
         // Duration-matched LRC from lrclib.net (33382284) for Kendrick Lamar - Prayer (Jug6yCFhAMo)

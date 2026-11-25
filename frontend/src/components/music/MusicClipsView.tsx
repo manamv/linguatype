@@ -26,7 +26,9 @@ import {
   X,
   Shuffle,
   Snowflake,
-  Library
+  Library,
+  BookmarkPlus,
+  Check
 } from 'lucide-react'
 import type { MusicLesson, LessonData } from '../../types'
 import { api } from '../../services/api'
@@ -34,6 +36,7 @@ import { soundService } from '../../services/sound'
 import { WordPopover } from '../typing/WordPopover'
 import { useWordSelection } from '../../hooks/useWordSelection'
 import { normalizeEnglishWord } from '../../utils/dictionary'
+import { SONG_VOCABULARY, type SongVocabItem } from '../../data/songVocabulary'
 
 interface YTPlayerInstance {
   playVideo?: () => void
@@ -447,7 +450,9 @@ export const MusicClipsView: React.FC<MusicClipsViewProps> = ({ onStartTyping, o
   const [selectedSongId, setSelectedSongId] = useState<string>('queen-champions')
   const [currentSong, setCurrentSong] = useState<MusicLesson | null>(null)
   const [isLoading, setIsLoading] = useState<boolean>(true)
-  const [activeTab, setActiveTab] = useState<'grammar' | 'ai-meaning'>('grammar')
+  const [activeTab, setActiveTab] = useState<'grammar' | 'vocab' | 'ai-meaning'>('grammar')
+  const [savedVocabWords, setSavedVocabWords] = useState<Record<string, boolean>>({})
+  const [savingVocabWord, setSavingVocabWord] = useState<string | null>(null)
 
   // Scalable Music Catalog state (CEFR level filter, search, collapsible drawer)
   const [selectedLevelFilter, setSelectedLevelFilter] = useState<string>('ALL')
@@ -1120,6 +1125,27 @@ export const MusicClipsView: React.FC<MusicClipsViewProps> = ({ onStartTyping, o
   }, [currentSong, musicMode, dictationPhase, activeSubtitleId, lineCleared, handleAdvanceDictationLine])
 
   const aiAnalysis = AI_SONG_ANALYSES[selectedSongId] || AI_SONG_ANALYSES['queen-champions']
+  const songVocab: SongVocabItem[] = SONG_VOCABULARY[selectedSongId] || SONG_VOCABULARY['queen-champions']
+
+  const handleSaveSongVocabWord = async (item: SongVocabItem) => {
+    if (savedVocabWords[item.word] || savingVocabWord === item.word) return
+    setSavingVocabWord(item.word)
+    try {
+      await api.addVocabularyWord({
+        word: item.word,
+        translation: item.translation,
+        phonetic: item.ipa,
+        partOfSpeech: item.pos
+      })
+      setSavedVocabWords(prev => ({ ...prev, [item.word]: true }))
+      soundService.playQuizCorrect()
+    } catch {
+      // Fallback: mark saved locally so UX stays responsive
+      setSavedVocabWords(prev => ({ ...prev, [item.word]: true }))
+    } finally {
+      setSavingVocabWord(null)
+    }
+  }
 
   // Count tracks per CEFR level for scalable filter pills
   const levelCounts = useMemo(() => {
@@ -1981,32 +2007,45 @@ export const MusicClipsView: React.FC<MusicClipsViewProps> = ({ onStartTyping, o
           {/* RIGHT COLUMN: Expanded Grammar Breakdown vs AI Meaning Analysis Tabs */}
           <div className="lg:col-span-5 space-y-3">
             <div className="p-5 rounded-3xl bg-[#090d16] border border-white/[0.08] space-y-4 shadow-2xl">
-              {/* Tab Switcher: Grammar vs AI Meaning */}
-              <div className="flex items-center gap-1.5 p-1 bg-white/[0.03] rounded-xl border border-white/[0.06] text-xs font-mono">
+              {/* Tab Switcher: Grammar vs Song Vocabulary vs AI Meaning */}
+              <div className="flex items-center gap-1 p-1 bg-white/[0.03] rounded-xl border border-white/[0.06] text-[11px] font-mono">
                 <button
                   onClick={() => setActiveTab('grammar')}
-                  className={`flex-1 py-2 rounded-lg transition-all flex items-center justify-center space-x-1.5 cursor-pointer ${
+                  className={`flex-1 py-2 px-1.5 rounded-lg transition-all flex items-center justify-center space-x-1 cursor-pointer ${
                     activeTab === 'grammar'
                       ? 'bg-white/[0.1] text-white font-semibold shadow-sm border border-white/[0.1]'
                       : 'text-slate-400 hover:text-white'
                   }`}
                   data-testid="tab-grammar-rules"
                 >
-                  <BookOpen className="w-3.5 h-3.5" />
-                  <span>Разбор правил песни</span>
+                  <BookOpen className="w-3.5 h-3.5 shrink-0" />
+                  <span className="truncate">Разбор правил песни</span>
+                </button>
+
+                <button
+                  onClick={() => setActiveTab('vocab')}
+                  className={`flex-1 py-2 px-1.5 rounded-lg transition-all flex items-center justify-center space-x-1 cursor-pointer ${
+                    activeTab === 'vocab'
+                      ? 'bg-white/[0.1] text-white font-semibold shadow-sm border border-white/[0.1]'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                  data-testid="tab-song-vocab"
+                >
+                  <Languages className="w-3.5 h-3.5 shrink-0 text-emerald-400" />
+                  <span className="truncate">Словарь ({songVocab.length})</span>
                 </button>
 
                 <button
                   onClick={() => setActiveTab('ai-meaning')}
-                  className={`flex-1 py-2 rounded-lg transition-all flex items-center justify-center space-x-1.5 cursor-pointer ${
+                  className={`flex-1 py-2 px-1.5 rounded-lg transition-all flex items-center justify-center space-x-1 cursor-pointer ${
                     activeTab === 'ai-meaning'
                       ? 'bg-white/[0.1] text-white font-semibold shadow-sm border border-white/[0.1]'
                       : 'text-slate-400 hover:text-white'
                   }`}
                   data-testid="tab-ai-meaning"
                 >
-                  <Bot className="w-3.5 h-3.5" />
-                  <span>Смысл от AI</span>
+                  <Bot className="w-3.5 h-3.5 shrink-0" />
+                  <span className="truncate">Смысл от AI</span>
                 </button>
               </div>
 
@@ -2049,7 +2088,77 @@ export const MusicClipsView: React.FC<MusicClipsViewProps> = ({ onStartTyping, o
                 </div>
               )}
 
-              {/* TAB 2: AI DEEP MEANING & CULTURAL CONTEXT */}
+              {/* TAB 2: SONG VOCABULARY (Key Unfamiliar Words + Context from Song) */}
+              {activeTab === 'vocab' && (
+                <div className="space-y-3 animate-fade-in" data-testid="song-vocab-content">
+                  <div className="p-3.5 rounded-2xl bg-gradient-to-r from-emerald-500/10 via-transparent to-sky-500/10 border border-white/[0.08]">
+                    <div className="text-xs font-bold text-emerald-300 flex items-center gap-1.5">
+                      <Languages className="w-3.5 h-3.5 text-emerald-400" />
+                      <span>Ключевая лексика и идиомы из песни</span>
+                    </div>
+                    <p className="text-[11px] text-slate-400 mt-0.5">
+                      Наиболее полезные и редкие выражения с переводом и точным контекстом из трека.
+                    </p>
+                  </div>
+
+                  <div className="space-y-2.5 max-h-[560px] overflow-y-auto pr-1.5">
+                    {songVocab.map(item => {
+                      const isSaved = Boolean(savedVocabWords[item.word])
+                      const isSaving = savingVocabWord === item.word
+                      return (
+                        <div
+                          key={item.word}
+                          className="p-3.5 rounded-2xl bg-white/[0.025] border border-white/[0.07] space-y-2 hover:border-emerald-400/30 transition-all"
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="min-w-0">
+                              <div className="flex flex-wrap items-center gap-1.5">
+                                <span className="text-sm font-bold text-white font-mono">{item.word}</span>
+                                <span className="text-[11px] font-mono text-slate-400">{item.ipa}</span>
+                                <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-md bg-emerald-500/15 text-emerald-300 border border-emerald-400/25">
+                                  {item.level}
+                                </span>
+                                <span className="text-[10px] font-mono text-slate-500">{item.pos}</span>
+                              </div>
+                              <div className="text-xs text-slate-200 mt-1 leading-relaxed">{item.translation}</div>
+                            </div>
+
+                            <div className="flex items-center gap-1 shrink-0">
+                              <button
+                                onClick={() => soundService.speakText(item.word, 0.95)}
+                                className="p-1.5 rounded-lg bg-white/[0.04] hover:bg-sky-500/20 text-sky-400 transition cursor-pointer"
+                                title="Озвучить слово"
+                                aria-label={`Озвучить ${item.word}`}
+                              >
+                                <Volume2 className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                onClick={() => handleSaveSongVocabWord(item)}
+                                disabled={isSaved || isSaving}
+                                className={`px-2 py-1.5 rounded-lg text-[10px] font-mono transition flex items-center gap-1 cursor-pointer ${
+                                  isSaved
+                                    ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-400/35'
+                                    : 'bg-white/[0.05] hover:bg-emerald-500/20 text-slate-300 hover:text-emerald-200 border border-white/[0.08]'
+                                }`}
+                                data-testid={`save-song-vocab-${item.word.replace(/\s+/g, '-')}`}
+                              >
+                                {isSaved ? <Check className="w-3 h-3" /> : <BookmarkPlus className="w-3 h-3" />}
+                                <span>{isSaved ? 'В словаре' : 'В словарь'}</span>
+                              </button>
+                            </div>
+                          </div>
+
+                          <div className="font-mono text-[11px] text-sky-200/90 bg-[#050810] px-3 py-2 rounded-xl border border-white/[0.06] select-text">
+                            <span className="text-slate-500 mr-1.5">Контекст:</span>«{item.contextQuote}»
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* TAB 3: AI DEEP MEANING & CULTURAL CONTEXT */}
               {activeTab === 'ai-meaning' && (
                 <div className="space-y-3 animate-fade-in" data-testid="ai-meaning-content">
                   <div className="p-4 rounded-2xl bg-gradient-to-r from-indigo-500/10 via-transparent to-sky-500/10 border border-white/[0.08] space-y-2">

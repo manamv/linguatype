@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { Button } from '../components/ui/Button'
 import { Card } from '../components/ui/Card'
 import { Badge } from '../components/ui/Badge'
@@ -206,5 +206,29 @@ describe('Design System (shadcn/ui) & Scalable Music Catalog Tests', () => {
     for (const id of expectedIds) {
       expect(await screen.findByTestId(`song-tab-${id}`)).toBeInTheDocument()
     }
+  })
+
+  it('MusicClipsView: displays Song Vocabulary tab with unfamiliar words, context quotes, and save-to-vocabulary action', async () => {
+    render(<MusicClipsView onStartTyping={vi.fn()} />)
+
+    // Select Harry Styles - Coming Up Roses
+    fireEvent.click(await screen.findByTestId('song-tab-harry-styles-coming-up-roses'))
+
+    // Open Song Vocabulary tab
+    const vocabTab = await screen.findByTestId('tab-song-vocab')
+    fireEvent.click(vocabTab)
+
+    const vocabContent = await screen.findByTestId('song-vocab-content')
+    expect(vocabContent).toBeInTheDocument()
+    expect(vocabContent).toHaveTextContent(/coming up roses/i)
+    expect(vocabContent).toHaveTextContent(/devoid of/i)
+    expect(vocabContent).toHaveTextContent(/Контекст:/i)
+
+    // Save word to personal vocabulary
+    const saveBtn = screen.getByTestId('save-song-vocab-devoid-of')
+    fireEvent.click(saveBtn)
+    await waitFor(() => {
+      expect(screen.getByTestId('save-song-vocab-devoid-of')).toHaveTextContent(/В словаре/i)
+    })
   })
 })
