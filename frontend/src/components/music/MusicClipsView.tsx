@@ -1805,8 +1805,8 @@ export const MusicClipsView: React.FC<MusicClipsViewProps> = ({ onStartTyping, o
           {/* RIGHT COLUMN: Expanded Grammar Breakdown | Song Vocab | Quiz | Meaning (Matches Left Column Height) */}
           <div className="lg:col-span-5 flex flex-col">
             <div className="p-5 rounded-3xl bg-[#090d16] border border-white/[0.08] flex flex-col gap-4 shadow-2xl flex-1">
-              {/* Tab Switcher: Grammar | Vocabulary | Comprehension Quiz | AI Meaning */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-1 p-1 bg-white/[0.03] rounded-xl border border-white/[0.06] text-[11px] font-mono">
+              {/* Tab Switcher: Grammar | Vocabulary | Comprehension Quiz | Meaning (2x2 clean grid, zero truncation) */}
+              <div className="grid grid-cols-2 gap-1.5 p-1.5 bg-white/[0.03] rounded-xl border border-white/[0.06] text-xs font-mono">
                 <button
                   onClick={() => setActiveTab('grammar')}
                   className={`py-2 px-1.5 rounded-lg transition-all flex items-center justify-center space-x-1 cursor-pointer ${
