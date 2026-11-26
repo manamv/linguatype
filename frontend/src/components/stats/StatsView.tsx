@@ -2,7 +2,6 @@ import React, { useState } from 'react'
 import { BarChart3, Target, Award, AlertTriangle, RotateCcw, TrendingUp, Zap } from 'lucide-react'
 import type { UserStatsSummary } from '../../types'
 import { Card } from '../ui/Card'
-import { VirtualKeyboard } from '../keyboard/VirtualKeyboard'
 import { weakKeysService } from '../../services/weakKeys'
 
 interface StatsViewProps {
@@ -453,8 +452,6 @@ export const StatsView: React.FC<StatsViewProps> = ({
             )}
           </div>
         </Card>
-
-        <VirtualKeyboard heatmapMode={true} heatmapData={heatmap} />
       </div>
     </div>
   )

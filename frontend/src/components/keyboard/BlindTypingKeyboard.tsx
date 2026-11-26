@@ -6,8 +6,6 @@ interface BlindTypingKeyboardProps {
   pressedKey?: string | null
   heatmapMode?: boolean
   heatmapData?: Record<string, number>
-  mode?: 'blindtyping' | 'isometric'
-  onToggleMode?: () => void
 }
 
 interface KeyModel {
@@ -245,9 +243,7 @@ export const BlindTypingKeyboard: React.FC<BlindTypingKeyboardProps> = React.mem
   activeChar,
   pressedKey = null,
   heatmapMode = false,
-  heatmapData = {},
-  mode,
-  onToggleMode
+  heatmapData = {}
 }) => {
   const normalizedActive = (activeChar || '').toLowerCase()
 
@@ -463,16 +459,6 @@ export const BlindTypingKeyboard: React.FC<BlindTypingKeyboardProps> = React.mem
             <span className="w-2 h-2 rounded-full bg-sky-400 shadow-[0_0_8px_#38bdf8]"></span>
             <span className="text-slate-100 font-semibold text-xs sm:text-sm">Слепая печать (Blind Typing)</span>
           </div>
-
-          {onToggleMode && (
-            <button
-              onClick={onToggleMode}
-              className="text-[11px] font-mono px-2.5 py-1 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-slate-300 hover:text-white border border-white/[0.08] transition cursor-pointer flex items-center space-x-1"
-              title="Переключить режим отображения клавиатуры"
-            >
-              <span>{mode === 'blindtyping' ? '🖐 Силуэты рук' : '🧊 Режим 3D'}</span>
-            </button>
-          )}
         </div>
 
         {targetFinger && (
