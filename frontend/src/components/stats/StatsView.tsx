@@ -16,6 +16,13 @@ export const StatsView: React.FC<StatsViewProps> = ({
 }) => {
   const [chartMetric, setChartMetric] = useState<'wpm' | 'accuracy'>('wpm')
   const [hoveredIdx, setHoveredIdx] = useState<number | null>(null)
+  const [hoveredKey, setHoveredKey] = useState<string | null>(null)
+
+  const QWERTY_ROWS = [
+    ['q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p'],
+    ['a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l'],
+    ['z', 'x', 'c', 'v', 'b', 'n', 'm']
+  ]
 
   const heatmap = weakKeysService.getKeyHeatmap()
   const weakKeys = weakKeysService.getWeakKeys()
@@ -381,6 +388,71 @@ export const StatsView: React.FC<StatsViewProps> = ({
             </span>
           </div>
         </div>
+
+        {/* Interactive QWERTY Accuracy Heatmap with Live Key Tooltip */}
+        <Card className="bg-[#090d16]/90 border border-white/[0.08] space-y-3" data-testid="interactive-qwerty-heatmap">
+          <div className="space-y-2">
+            {QWERTY_ROWS.map((row, rIdx) => (
+              <div
+                key={rIdx}
+                className="flex items-center justify-center gap-1.5"
+                style={{ paddingLeft: `${rIdx * 18}px` }}
+              >
+                {row.map(k => {
+                  const errRate = heatmap[k] ?? 0
+                  const accPct = Math.max(0, Math.min(100, Math.round((1 - errRate) * 100)))
+                  const hasData = k in heatmap
+                  const colorCls = !hasData
+                    ? 'bg-white/[0.03] border-white/[0.08] text-slate-400 hover:border-sky-400/40'
+                    : errRate >= 0.25
+                      ? 'bg-rose-500/25 border-rose-400/60 text-rose-200 shadow-sm shadow-rose-500/20'
+                      : errRate >= 0.1
+                        ? 'bg-amber-500/20 border-amber-400/50 text-amber-200'
+                        : 'bg-emerald-500/20 border-emerald-400/45 text-emerald-200'
+                  return (
+                    <button
+                      key={k}
+                      type="button"
+                      onMouseEnter={() => setHoveredKey(k)}
+                      onFocus={() => setHoveredKey(k)}
+                      onClick={() => setHoveredKey(k)}
+                      className={`w-10 h-10 sm:w-11 sm:h-11 rounded-xl border font-mono text-xs font-bold transition-transform hover:scale-105 cursor-pointer flex flex-col items-center justify-center ${colorCls}`}
+                      data-testid={`heatmap-key-${k}`}
+                      aria-label={`Клавиша ${k.toUpperCase()}, точность ${accPct}%`}
+                    >
+                      <span>{k.toUpperCase()}</span>
+                      {hasData && <span className="text-[9px] font-normal opacity-80">{accPct}%</span>}
+                    </button>
+                  )
+                })}
+              </div>
+            ))}
+          </div>
+
+          <div
+            className="px-3.5 py-2 rounded-xl bg-[#050810] border border-white/[0.07] text-xs font-mono flex flex-wrap items-center justify-between gap-2"
+            data-testid="heatmap-key-tooltip"
+          >
+            {hoveredKey ? (
+              <>
+                <span className="text-slate-300">
+                  Клавиша <strong className="text-white">{hoveredKey.toUpperCase()}</strong>:
+                </span>
+                <span className="text-sky-300">
+                  точность{' '}
+                  <strong>{Math.max(0, Math.min(100, Math.round((1 - (heatmap[hoveredKey] ?? 0)) * 100)))}%</strong>
+                  {hoveredKey in heatmap
+                    ? ` • доля опечаток ${Math.round((heatmap[hoveredKey] ?? 0) * 100)}%`
+                    : ' • пока без опечаток'}
+                </span>
+              </>
+            ) : (
+              <span className="text-slate-500">
+                Наведите или нажмите на любую клавишу QWERTY, чтобы увидеть точность и долю опечаток.
+              </span>
+            )}
+          </div>
+        </Card>
 
         <VirtualKeyboard heatmapMode={true} heatmapData={heatmap} />
       </div>

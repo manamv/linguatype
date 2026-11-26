@@ -7,7 +7,9 @@ import { TopicSelector } from '../components/grammar/TopicSelector'
 import { MusicClipsView } from '../components/music/MusicClipsView'
 import { VocabularyView } from '../components/vocabulary/VocabularyView'
 import { TypingEngine } from '../components/typing/TypingEngine'
+import { StatsView } from '../components/stats/StatsView'
 import { achievementsService } from '../services/achievements'
+import { themeService, THEME_PRESETS } from '../services/theme'
 import { DICTIONARY_MAP } from '../utils/dictionary'
 
 describe('Design System (shadcn/ui) & Scalable Music Catalog Tests', () => {
@@ -324,5 +326,46 @@ describe('Design System (shadcn/ui) & Scalable Music Catalog Tests', () => {
     // Pressing English letter clears wrong-layout pill immediately
     fireEvent.keyDown(window, { key: 'h' })
     expect(screen.queryByTestId('wrong-layout-warning')).not.toBeInTheDocument()
+  })
+
+  it('Theme Studio: switches across 5 presets including Nordic Daylight and persists selection', () => {
+    expect(THEME_PRESETS.length).toBe(5)
+    themeService.setTheme('nordic-light')
+    expect(themeService.getTheme()).toBe('nordic-light')
+    expect(document.documentElement.getAttribute('data-theme')).toBe('nordic-light')
+    themeService.setTheme('cyber-sky')
+    expect(themeService.getTheme()).toBe('cyber-sky')
+  })
+
+  it('TypingEngine: toggles Zen Focus mode via callback button', () => {
+    const handleToggleZen = vi.fn()
+    const lesson = {
+      id: 'zen-test',
+      title: 'Zen Test',
+      level: 'B1',
+      description: 'Test',
+      sentences: [{ id: 's1', english: 'clean code', russian: 'чистый код' }]
+    }
+    render(<TypingEngine lesson={lesson} onFinish={vi.fn()} zenMode={false} onToggleZenMode={handleToggleZen} />)
+    fireEvent.click(screen.getByTestId('zen-mode-toggle'))
+    expect(handleToggleZen).toHaveBeenCalledTimes(1)
+  })
+
+  it('MusicClipsView: renders Ambient Mood backdrop and live equalizer on active song card', async () => {
+    render(<MusicClipsView onStartTyping={vi.fn()} />)
+    await screen.findByTestId('song-tab-queen-champions')
+    expect(screen.getByTestId('song-ambient-mood')).toBeInTheDocument()
+    expect(screen.getByTestId('active-song-equalizer')).toBeInTheDocument()
+  })
+
+  it('StatsView: renders Interactive QWERTY Heatmap and updates tooltip on key click', () => {
+    render(
+      <StatsView
+        summary={{ totalSessions: 4, avgWpm: 72, avgAccuracy: 96.5, totalErrors: 5, weakKeysFrequency: { r: 3 } }}
+      />
+    )
+    expect(screen.getByTestId('interactive-qwerty-heatmap')).toBeInTheDocument()
+    fireEvent.click(screen.getByTestId('heatmap-key-r'))
+    expect(screen.getByTestId('heatmap-key-tooltip')).toHaveTextContent(/Клавиша R/i)
   })
 })

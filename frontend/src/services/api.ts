@@ -917,7 +917,7 @@ export const api = {
     return await res.json()
   },
 
-  async getMusicLessons(): Promise<Array<{ id: string; title: string; artist: string; level: string; thumbnailUrl: string; grammarFocus: string; sentenceCount: number }>> {
+  async getMusicLessons(): Promise<Array<{ id: string; title: string; artist: string; level: string; videoUrl?: string; thumbnailUrl: string; grammarFocus: string; sentenceCount: number }>> {
     try {
       const res = await fetch(`${API_BASE}/music-lessons`)
       if (!res.ok) throw new Error(`Failed to load music lessons: ${res.status}`)
@@ -928,6 +928,7 @@ export const api = {
         title: m.title,
         artist: m.artist,
         level: m.level,
+        videoUrl: m.videoUrl,
         thumbnailUrl: m.thumbnailUrl,
         grammarFocus: m.grammarFocus,
         sentenceCount: m.typingSentences.length

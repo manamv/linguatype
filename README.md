@@ -70,7 +70,7 @@ docker compose up --build
 * **API бэкенда:** `http://localhost:5000` (проксируется автоматически)
 
 ```bash
-# Запуск всех 47 тестов в изолированном Linux-контейнере:
+# Запуск всех 56 тестов в изолированном Linux-контейнере:
 docker compose run --rm tests
 ```
 
@@ -117,7 +117,7 @@ npm test
 
 ---
 
-## 🧪 Результат запуска клиентских тестов (47 из 47 успешно)
+## 🧪 Результат запуска клиентских тестов (56 из 56 успешно)
 
 ```text
  RUN  v5.1.1 D:/linguatype/frontend
@@ -127,10 +127,10 @@ npm test
  ✓ src/tests/doubleSubmit.test.tsx (2 tests)
  ✓ src/tests/formValidation.test.tsx (4 tests)
  ✓ src/tests/componentsAndInteractions.test.tsx (26 tests)
- ✓ src/tests/musicCatalogAndDesignSystem.test.tsx (10 tests)
+ ✓ src/tests/musicCatalogAndDesignSystem.test.tsx (19 tests)
 
  Test Files  6 passed (6)
-      Tests  47 passed (47)
+      Tests  56 passed (56)
 ```
 
 ---

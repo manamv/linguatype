@@ -140,6 +140,23 @@ const MUSIC_LEVEL_META: Record<
   }
 }
 
+const SONG_MOOD_GRADIENTS: Record<string, string> = {
+  'queen-champions': 'radial-gradient(ellipse 90% 55% at 50% 0%, rgba(251,191,36,0.13), transparent 70%)',
+  'coldplay-scientist': 'radial-gradient(ellipse 90% 55% at 50% 0%, rgba(56,189,248,0.14), transparent 70%)',
+  'beatles-yesterday': 'radial-gradient(ellipse 90% 55% at 50% 0%, rgba(148,163,184,0.13), transparent 70%)',
+  'steve-lacy-the-feeling': 'radial-gradient(ellipse 90% 55% at 50% 0%, rgba(244,114,182,0.14), transparent 70%)',
+  'wham-last-christmas': 'radial-gradient(ellipse 90% 55% at 50% 0%, rgba(125,211,252,0.18), transparent 70%)',
+  'harry-styles-coming-up-roses': 'radial-gradient(ellipse 90% 55% at 50% 0%, rgba(251,113,133,0.15), transparent 70%)',
+  'frank-ocean-ivy': 'radial-gradient(ellipse 90% 55% at 50% 0%, rgba(16,185,129,0.15), transparent 70%)',
+  'sting-shape-of-my-heart': 'radial-gradient(ellipse 90% 55% at 50% 0%, rgba(99,102,241,0.15), transparent 70%)',
+  'eagles-hotel-california': 'radial-gradient(ellipse 90% 55% at 50% 0%, rgba(249,115,22,0.15), transparent 70%)',
+  'hozier-take-me-to-church': 'radial-gradient(ellipse 90% 55% at 50% 0%, rgba(168,85,247,0.15), transparent 70%)',
+  'kendrick-count-me-out': 'radial-gradient(ellipse 90% 55% at 50% 0%, rgba(225,29,72,0.13), transparent 70%)',
+  'kendrick-prayer': 'radial-gradient(ellipse 90% 55% at 50% 0%, rgba(234,179,8,0.13), transparent 70%)',
+  'kendrick-samidot': 'radial-gradient(ellipse 90% 55% at 50% 0%, rgba(190,18,60,0.14), transparent 70%)',
+  'j-cole-4-your-eyez-only': 'radial-gradient(ellipse 90% 55% at 50% 0%, rgba(59,130,246,0.14), transparent 70%)'
+}
+
 export const MusicClipsView: React.FC<MusicClipsViewProps> = ({ onStartTyping, onBack }) => {
   const [songsList, setSongsList] = useState<
     Array<{
@@ -147,6 +164,7 @@ export const MusicClipsView: React.FC<MusicClipsViewProps> = ({ onStartTyping, o
       title: string
       artist: string
       level: string
+      videoUrl?: string
       thumbnailUrl: string
       grammarFocus: string
       sentenceCount: number
@@ -971,6 +989,14 @@ export const MusicClipsView: React.FC<MusicClipsViewProps> = ({ onStartTyping, o
       data-testid="music-clips-view"
       onMouseUp={handleTextSelection}
     >
+      {/* Ambient Mood Gradient Backdrop (zero GPU blur cost, shifts smoothly per song) */}
+      <div
+        className="pointer-events-none fixed inset-0 z-0 transition-opacity duration-500"
+        style={{ background: SONG_MOOD_GRADIENTS[selectedSongId] || SONG_MOOD_GRADIENTS['queen-champions'] }}
+        aria-hidden="true"
+        data-testid="song-ambient-mood"
+      />
+
       {/* Subtle GPU-only snowfall overlay when Last Christmas is active */}
       {selectedSongId === 'wham-last-christmas' && (
         <div
@@ -1201,15 +1227,48 @@ export const MusicClipsView: React.FC<MusicClipsViewProps> = ({ onStartTyping, o
                               }`}
                               data-testid={`song-tab-${song.id}`}
                             >
-                              <div className="flex items-start justify-between gap-2 w-full">
-                                <div className="min-w-0">
-                                  <div className="text-xs font-bold text-white truncate flex items-center gap-1.5">
-                                    <span className="truncate">{song.title}</span>
-                                    {isChristmas && (
-                                      <Snowflake className="w-3 h-3 text-sky-300 shrink-0" aria-hidden="true" />
-                                    )}
+                              <div className="flex items-start justify-between gap-2.5 w-full">
+                                <div className="flex items-center gap-2.5 min-w-0">
+                                  {/* YouTube Video Cover Preview + Live Equalizer */}
+                                  <div className="relative w-11 h-11 rounded-xl overflow-hidden bg-[#0b1120] border border-white/[0.1] shrink-0">
+                                    <img
+                                      src={
+                                        song.videoUrl
+                                          ? `https://i.ytimg.com/vi/${extractYouTubeId(song.videoUrl)}/mqdefault.jpg`
+                                          : song.thumbnailUrl
+                                      }
+                                      alt={`${song.artist} — ${song.title}`}
+                                      loading="lazy"
+                                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                    />
+                                    <div
+                                      className={`absolute inset-0 flex items-center justify-center transition ${
+                                        isSelected
+                                          ? 'bg-slate-950/55'
+                                          : 'bg-slate-950/35 opacity-0 group-hover:opacity-100'
+                                      }`}
+                                    >
+                                      {isSelected ? (
+                                        <div className="flex items-end gap-[2.5px] h-3" aria-hidden="true" data-testid="active-song-equalizer">
+                                          <span className="eq-bar" />
+                                          <span className="eq-bar" />
+                                          <span className="eq-bar" />
+                                        </div>
+                                      ) : (
+                                        <Play className="w-3.5 h-3.5 text-white fill-current" />
+                                      )}
+                                    </div>
                                   </div>
-                                  <div className="text-[11px] text-slate-400 truncate">{song.artist}</div>
+
+                                  <div className="min-w-0">
+                                    <div className="text-xs font-bold text-white truncate flex items-center gap-1.5">
+                                      <span className="truncate">{song.title}</span>
+                                      {isChristmas && (
+                                        <Snowflake className="w-3 h-3 text-sky-300 shrink-0" aria-hidden="true" />
+                                      )}
+                                    </div>
+                                    <div className="text-[11px] text-slate-400 truncate">{song.artist}</div>
+                                  </div>
                                 </div>
                                 <span
                                   className={`px-2 py-0.5 rounded-lg text-[10px] font-mono font-bold border shrink-0 ${meta.badgeClass}`}

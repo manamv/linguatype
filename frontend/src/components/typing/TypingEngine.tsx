@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react'
-import { Volume2, VolumeX, Pause, Play, RotateCcw, AlertCircle, Timer, Headphones, Eye, EyeOff, ArrowLeft, Flame } from 'lucide-react'
+import { Volume2, VolumeX, Pause, Play, RotateCcw, AlertCircle, Timer, Headphones, Eye, EyeOff, ArrowLeft, Flame, Maximize2, Minimize2 } from 'lucide-react'
 import type { LessonData, SessionStats } from '../../types'
 import { VirtualKeyboard } from '../keyboard/VirtualKeyboard'
 import { WordPopover } from './WordPopover'
@@ -13,12 +13,16 @@ interface TypingEngineProps {
   lesson: LessonData
   onFinish: (stats: SessionStats) => Promise<void>
   onBack?: () => void
+  zenMode?: boolean
+  onToggleZenMode?: () => void
 }
 
 export const TypingEngine: React.FC<TypingEngineProps> = ({
   lesson,
   onFinish,
-  onBack
+  onBack,
+  zenMode = false,
+  onToggleZenMode
 }) => {
   const [currentSentenceIndex, setCurrentSentenceIndex] = useState(0)
   const [typedChars, setTypedChars] = useState<string>('')
@@ -39,6 +43,8 @@ export const TypingEngine: React.FC<TypingEngineProps> = ({
   const [wordByWordMode, setWordByWordMode] = useState<boolean>(false)
   const [showRateMenu, setShowRateMenu] = useState<boolean>(false)
   const [isTextHidden, setIsTextHidden] = useState<boolean>(false)
+  const [pressedKey, setPressedKey] = useState<string | null>(null)
+  const pressedKeyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const currentSentence = lesson.sentences[currentSentenceIndex] || lesson.sentences[0]
   // Normalize target text: strictly lowercase, no punctuation
@@ -188,6 +194,9 @@ export const TypingEngine: React.FC<TypingEngineProps> = ({
       if (e.key.length === 1) {
         e.preventDefault()
         const typedKey = e.key.toLowerCase()
+        setPressedKey(typedKey)
+        if (pressedKeyTimerRef.current) clearTimeout(pressedKeyTimerRef.current)
+        pressedKeyTimerRef.current = setTimeout(() => setPressedKey(null), 150)
 
         // Start stopwatch and session timers
         if (!sentenceStartTime) {
@@ -339,7 +348,11 @@ export const TypingEngine: React.FC<TypingEngineProps> = ({
           </div>
           {combo >= 5 && (
             <div
-              className="flex items-center space-x-1 px-2 py-0.5 rounded-lg bg-amber-500/15 border border-amber-400/30 text-amber-300 font-bold text-[11px] animate-fade-in"
+              className={`flex items-center space-x-1 px-2 py-0.5 rounded-lg border font-bold text-[11px] animate-fade-in ${
+                combo >= 20
+                  ? 'bg-amber-500/25 border-amber-400/60 text-amber-200 combo-glow'
+                  : 'bg-amber-500/15 border-amber-400/30 text-amber-300'
+              }`}
               title="Серия безошибочных нажатий"
               data-testid="metric-combo"
             >
@@ -457,6 +470,23 @@ export const TypingEngine: React.FC<TypingEngineProps> = ({
             <span className="hidden sm:inline">Текст:</span>
             <span>{isTextHidden ? 'СКРЫТ' : 'ВИДЕН'}</span>
           </button>
+
+          {/* Zen Focus Mode Toggle */}
+          {onToggleZenMode && (
+            <button
+              onClick={onToggleZenMode}
+              className={`px-2 py-1 rounded-xl text-xs font-medium border transition cursor-pointer flex items-center space-x-1 ${
+                zenMode
+                  ? 'bg-indigo-500/20 text-indigo-200 border-indigo-400/50 shadow-md shadow-indigo-500/20 font-semibold'
+                  : 'bg-slate-800 text-slate-400 border-slate-700 hover:text-white'
+              }`}
+              title={zenMode ? 'Выйти из режима Zen Focus' : 'Режим погружения Zen Focus (скрыть шапку)'}
+              data-testid="zen-mode-toggle"
+            >
+              {zenMode ? <Minimize2 className="w-3 h-3" /> : <Maximize2 className="w-3 h-3" />}
+              <span className="hidden sm:inline">Zen</span>
+            </button>
+          )}
 
           {/* Pause / Resume Button */}
           <button
@@ -634,7 +664,7 @@ export const TypingEngine: React.FC<TypingEngineProps> = ({
 
       {/* 3. Anatomical Hands Virtual Keyboard (Compact, No-Scroll) */}
       <div className="w-full shrink-0">
-        <VirtualKeyboard activeChar={currentChar} />
+        <VirtualKeyboard activeChar={currentChar} pressedKey={pressedKey} />
       </div>
 
       {/* Double Submit Protection Indicator (when sending to server) */}

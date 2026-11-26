@@ -3,6 +3,7 @@ import type { FingerType } from '../../types'
 
 interface BlindTypingKeyboardProps {
   activeChar?: string
+  pressedKey?: string | null
   heatmapMode?: boolean
   heatmapData?: Record<string, number>
   mode?: 'blindtyping' | 'isometric'
@@ -242,6 +243,7 @@ const REST_POSITIONS: Record<FingerType, { x: number; y: number }> = (() => {
 
 export const BlindTypingKeyboard: React.FC<BlindTypingKeyboardProps> = React.memo(({
   activeChar,
+  pressedKey = null,
   heatmapMode = false,
   heatmapData = {},
   mode,
@@ -563,6 +565,7 @@ export const BlindTypingKeyboard: React.FC<BlindTypingKeyboardProps> = React.mem
                 <g
                   key={k.id}
                   data-testid={k.id === ' ' ? 'key-space' : `key-${k.id.toLowerCase()}`}
+                  transform={pressedKey && k.id.toLowerCase() === pressedKey.toLowerCase() ? 'translate(0, 2)' : undefined}
                   className="cursor-default"
                 >
                   {/* Fast layered neon halo for active key (replaces expensive SVG feDropShadow) */}

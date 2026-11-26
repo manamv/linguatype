@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Keyboard, BookOpen, BarChart3, Sparkles, Trophy, Music } from 'lucide-react'
+import { Keyboard, BookOpen, BarChart3, Sparkles, Trophy, Music, Palette } from 'lucide-react'
 import type { GrammarTopic, LessonData, SessionStats, UserStatsSummary, VocabularyWord } from './types'
 import { api } from './services/api'
+import { THEME_PRESETS, themeService, type ThemeId } from './services/theme'
 import { TopicSelector } from './components/grammar/TopicSelector'
 import { TopicQuizView } from './components/grammar/TopicQuizView'
 import { TypingEngine } from './components/typing/TypingEngine'
@@ -48,6 +49,18 @@ export function App() {
   // Achievements states
   const [isAchievementsOpen, setIsAchievementsOpen] = useState(false)
   const [unlockedToast, setUnlockedToast] = useState<string | null>(null)
+
+  // Theme Studio & Zen Focus Mode
+  const [themeId, setThemeId] = useState<ThemeId>(() => themeService.getTheme())
+  const [isThemeMenuOpen, setIsThemeMenuOpen] = useState(false)
+  const [zenMode, setZenMode] = useState(false)
+
+  useEffect(() => {
+    themeService.setTheme(themeId)
+  }, [themeId])
+
+  const activeThemePreset = themeService.getPreset(themeId)
+  const isZenActive = zenMode && activeTab === 'PRACTICE' && practiceMode === 'TYPING'
 
   // Initial load
   const loadInitialData = useCallback(async () => {
@@ -108,6 +121,7 @@ export function App() {
 
   // Back to topics or previous view
   const handleBackFromTyping = () => {
+    setZenMode(false)
     if (currentLesson?.id.startsWith('music-')) {
       setActiveTab('MUSIC')
     }
@@ -153,6 +167,7 @@ export function App() {
       setTimeout(() => setUnlockedToast(null), 5000)
     }
 
+    setZenMode(false)
     setPracticeMode('RESULT')
   }
 
@@ -196,8 +211,12 @@ export function App() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#060911] bg-[radial-gradient(ellipse_85%_55%_at_50%_-10%,rgba(56,189,248,0.15),rgba(6,9,17,0)),radial-gradient(ellipse_60%_40%_at_85%_95%,rgba(99,102,241,0.06),rgba(6,9,17,0))] text-slate-100">
-      {/* Top Navbar */}
+    <div
+      className="theme-app-shell min-h-screen flex flex-col text-slate-100 transition-colors duration-300"
+      style={{ background: activeThemePreset.bgStyle }}
+    >
+      {/* Top Navbar (hidden in Zen Focus mode) */}
+      {!isZenActive && (
       <header className="border-b border-white/[0.07] bg-[#060911]/92 backdrop-blur-sm sticky top-0 z-40 px-6 py-2.5 shrink-0 shadow-2xl shadow-black/80">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           {/* Logo & Product Name */}
@@ -283,8 +302,57 @@ export function App() {
             </button>
           </nav>
 
-          {/* User Score Badge & Achievements Button */}
-          <div className="flex items-center space-x-3 text-xs font-mono">
+          {/* User Score Badge, Theme Studio & Achievements Button */}
+          <div className="flex items-center space-x-2.5 text-xs font-mono">
+            {/* Theme Studio Picker */}
+            <div className="relative">
+              <button
+                onClick={() => setIsThemeMenuOpen(o => !o)}
+                className="flex items-center space-x-1.5 px-2.5 py-1.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.09] text-slate-300 hover:text-white border border-white/[0.08] transition cursor-pointer"
+                title="Сменить цветовую тему"
+                aria-label="Сменить цветовую тему"
+                data-testid="theme-switcher-btn"
+              >
+                <Palette className="w-3.5 h-3.5 text-sky-400" />
+                <span
+                  className="w-2.5 h-2.5 rounded-full border border-white/30"
+                  style={{ backgroundColor: activeThemePreset.swatch }}
+                />
+              </button>
+
+              {isThemeMenuOpen && (
+                <div
+                  className="absolute right-0 mt-2 w-48 p-1.5 rounded-2xl bg-[#090d16] border border-white/[0.12] shadow-2xl shadow-black/90 z-50 space-y-1 animate-fade-in"
+                  data-testid="theme-switcher-menu"
+                >
+                  {THEME_PRESETS.map(preset => (
+                    <button
+                      key={preset.id}
+                      onClick={() => {
+                        setThemeId(preset.id)
+                        setIsThemeMenuOpen(false)
+                      }}
+                      className={`w-full px-3 py-2 rounded-xl text-left text-xs font-mono flex items-center justify-between transition cursor-pointer ${
+                        themeId === preset.id
+                          ? 'bg-sky-500/20 text-white font-bold border border-sky-400/35'
+                          : 'text-slate-300 hover:bg-white/[0.06] hover:text-white'
+                      }`}
+                      data-testid={`theme-option-${preset.id}`}
+                    >
+                      <span className="flex items-center gap-2">
+                        <span
+                          className="w-3 h-3 rounded-full border border-white/30 shrink-0"
+                          style={{ backgroundColor: preset.swatch }}
+                        />
+                        <span>{preset.name}</span>
+                      </span>
+                      {themeId === preset.id && <span className="text-sky-400">✓</span>}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
             <button
               onClick={() => setIsAchievementsOpen(true)}
               className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-amber-500/[0.08] hover:bg-amber-500/[0.15] text-amber-300 border border-amber-500/25 transition cursor-pointer shadow-sm"
@@ -295,13 +363,14 @@ export function App() {
               <span>Награды ({achievementsService.getUnlockedCount()}/{achievementsService.getAchievements().length})</span>
             </button>
 
-            <div className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-white/[0.03] border border-white/[0.08] text-sky-400 shadow-sm">
+            <div className="hidden sm:flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-white/[0.03] border border-white/[0.08] text-sky-400 shadow-sm">
               <Sparkles className="w-3.5 h-3.5" />
               <span>{statsSummary.avgWpm} WPM</span>
             </div>
           </div>
         </div>
       </header>
+      )}
 
       {/* Main Content Area */}
       <main className={`w-full mx-auto flex flex-col ${activeTab === 'PRACTICE' && practiceMode === 'TYPING' ? 'flex-1 max-w-5xl px-3 py-2' : 'flex-1 max-w-6xl p-6 justify-center'}`}>
@@ -345,6 +414,8 @@ export function App() {
                     lesson={currentLesson}
                     onFinish={handleFinishTyping}
                     onBack={handleBackFromTyping}
+                    zenMode={zenMode}
+                    onToggleZenMode={() => setZenMode(z => !z)}
                   />
                 )}
 

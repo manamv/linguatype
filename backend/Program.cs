@@ -984,6 +984,7 @@ app.MapGet("/api/music-lessons", () => Results.Ok(musicLessons.Select(m => new
     m.Title,
     m.Artist,
     m.Level,
+    m.VideoUrl,
     m.ThumbnailUrl,
     m.GrammarFocus,
     SentenceCount = m.TypingSentences.Count
